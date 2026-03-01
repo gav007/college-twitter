@@ -30,7 +30,7 @@ router.get('/users/:username', (req, res, next) => {
     const currentUserId = req.session.userId || 0;
 
     const profileUser = db
-      .prepare('SELECT id, username, display_name, bio, avatar_url, created_at FROM users WHERE username = ?')
+      .prepare('SELECT id, username, display_name, bio, avatar_url, is_bot, created_at FROM users WHERE username = ?')
       .get(username);
 
     if (!profileUser) {
@@ -72,6 +72,7 @@ router.get('/users/:username', (req, res, next) => {
           t.created_at,
           u.username,
           u.display_name,
+          u.is_bot,
           COUNT(DISTINCT l.user_id) AS like_count,
           COUNT(DISTINCT r.id) AS reply_count,
           MAX(tm.id) AS media_id,

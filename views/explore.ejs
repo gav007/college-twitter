@@ -3,11 +3,7 @@
 
 <main class="container page-container">
   <section class="panel">
-    <form method="GET" action="/search" class="search-form">
-      <label for="search-q">Search usernames</label>
-      <input id="search-q" name="q" type="text" value="<%= query %>" placeholder="Search @username">
-      <button type="submit" class="btn-primary">Search</button>
-    </form>
+    <p class="muted">Use the header search to find people and jump into profiles.</p>
 
     <% if (query) { %>
       <h2>Search results for "<%= query %>"</h2>
@@ -17,6 +13,7 @@
       <% searchResults.forEach((user) => { %>
         <p>
           <a href="/users/<%= user.username %>"><%= user.display_name %> (@<%= user.username %>)</a>
+          <% if (user.is_bot) { %><span class="bot-badge">Bot</span><% } %>
           · <%= user.tweet_count %> tweets
         </p>
       <% }) %>

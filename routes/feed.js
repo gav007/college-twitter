@@ -18,6 +18,7 @@ router.get('/', requireAuth, (req, res, next) => {
           t.created_at,
           u.username,
           u.display_name,
+          u.is_bot,
           COUNT(DISTINCT l.user_id) AS like_count,
           COUNT(DISTINCT r.id) AS reply_count,
           MAX(tm.id) AS media_id,

@@ -10,7 +10,7 @@ function currentUser(req, res, next) {
   }
 
   const user = db
-    .prepare('SELECT id, username, display_name, bio, avatar_url, created_at FROM users WHERE id = ?')
+    .prepare('SELECT id, username, display_name, bio, avatar_url, is_bot, created_at FROM users WHERE id = ?')
     .get(req.session.userId);
 
   if (user) {

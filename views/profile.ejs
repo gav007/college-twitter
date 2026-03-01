@@ -15,6 +15,9 @@
     <div class="profile-headline">
       <h1><%= profileUser.display_name %></h1>
       <p class="tweet-username">@<%= profileUser.username %></p>
+      <% if (profileUser.is_bot) { %>
+        <p class="bot-profile-note">Automated account</p>
+      <% } %>
       <p class="profile-joined">Joined <%= joinedDate %></p>
     </div>
 

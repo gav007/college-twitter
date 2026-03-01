@@ -138,6 +138,29 @@ test('profile settings reject duplicate username', async ({ page }) => {
   await expect(page.getByText('Username is already taken.')).toBeVisible();
 });
 
+test('header search finds users globally', async ({ browser }) => {
+  const bob = buildUser('searchbob');
+  const alice = buildUser('searchalice');
+
+  const bobContext = await browser.newContext();
+  const bobPage = await bobContext.newPage();
+  await register(bobPage, bob);
+
+  const aliceContext = await browser.newContext();
+  const alicePage = await aliceContext.newPage();
+  await register(alicePage, alice);
+
+  await alicePage.goto('/');
+  await alicePage.locator('.nav-search-form .nav-search-input').fill(bob.username);
+  await alicePage.locator('.nav-search-form .nav-search-submit').click();
+
+  await expect(alicePage).toHaveURL(new RegExp(`/search\\?q=${bob.username}$`));
+  await expect(alicePage.getByRole('link', { name: new RegExp(`@${bob.username}`) })).toBeVisible();
+
+  await aliceContext.close();
+  await bobContext.close();
+});
+
 test('thread reply flow increments reply count', async ({ page }) => {
   const user = buildUser('replyuser');
   const parentContent = `thread-parent-${uniqueSuffix()}`;

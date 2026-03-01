@@ -54,6 +54,7 @@ const selectExploreTweetsStmt = db.prepare(
       lt.created_at,
       u.username,
       u.display_name,
+      u.is_bot,
       COALESCE(lc.like_count, 0) AS like_count,
       COALESCE(rc.reply_count, 0) AS reply_count,
       mm.media_id,
@@ -100,6 +101,7 @@ router.get('/search', (req, res, next) => {
             u.username,
             u.display_name,
             u.bio,
+            u.is_bot,
             COUNT(t.id) AS tweet_count
           FROM users u
           LEFT JOIN tweets t ON t.user_id = u.id

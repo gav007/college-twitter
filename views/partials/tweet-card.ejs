@@ -2,6 +2,9 @@
   <div class="tweet-header">
     <a href="/users/<%= tweet.username %>" class="tweet-author">
       <strong><%= tweet.display_name %></strong>
+      <% if (tweet.is_bot) { %>
+        <span class="bot-badge" aria-label="Automated account">Bot</span>
+      <% } %>
       <span class="tweet-username">@<%= tweet.username %></span>
     </a>
     <time class="tweet-time"><%= formatTime(tweet.created_at) %></time>

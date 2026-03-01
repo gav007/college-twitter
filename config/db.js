@@ -20,6 +20,7 @@ db.exec(`
     display_name TEXT NOT NULL,
     bio TEXT DEFAULT '',
     avatar_url TEXT NOT NULL DEFAULT '',
+    is_bot INTEGER NOT NULL DEFAULT 0 CHECK(is_bot IN (0, 1)),
     password_hash TEXT NOT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
@@ -101,6 +102,15 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_user_achievements_user_id ON user_achievements(user_id);
 
+  CREATE TABLE IF NOT EXISTS bot_ingested_items (
+    source_key TEXT PRIMARY KEY,
+    bot_username TEXT NOT NULL,
+    source_url TEXT NOT NULL,
+    published_at TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_bot_ingested_created_at ON bot_ingested_items(created_at DESC);
+
   CREATE TABLE IF NOT EXISTS sessions (
     sid TEXT PRIMARY KEY,
     sess TEXT NOT NULL,
@@ -119,5 +129,6 @@ function ensureColumnExists(tableName, columnName, definitionSql) {
 ensureColumnExists('follows', 'notify_posts', 'INTEGER NOT NULL DEFAULT 0');
 ensureColumnExists('follows', 'notify_replies', 'INTEGER NOT NULL DEFAULT 0');
 ensureColumnExists('users', 'avatar_url', "TEXT NOT NULL DEFAULT ''");
+ensureColumnExists('users', 'is_bot', 'INTEGER NOT NULL DEFAULT 0 CHECK(is_bot IN (0, 1))');
 
 module.exports = db;

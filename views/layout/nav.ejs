@@ -1,9 +1,15 @@
 <% const unreadCount = notificationUnreadCount || 0; %>
+<% const navSearchValue = typeof query !== 'undefined' ? query : ''; %>
 <nav class="site-nav" role="navigation" aria-label="Main navigation">
   <div class="nav-bar">
     <a href="/" class="nav-logo">Loopfeed</a>
 
     <div class="nav-actions-right">
+      <form method="GET" action="/search" class="nav-search-form nav-priority-link" role="search">
+        <label for="nav-search-q" class="sr-only">Search users</label>
+        <input id="nav-search-q" name="q" type="search" value="<%= navSearchValue %>" placeholder="Search @username" class="nav-search-input">
+        <button type="submit" class="nav-search-submit">Search</button>
+      </form>
       <a href="/explore" class="nav-link nav-priority-link">Explore</a>
       <% if (currentUser) { %>
         <a href="/users/<%= currentUser.username %>" class="nav-avatar-link nav-priority-link" aria-label="Open profile">
@@ -41,6 +47,13 @@
   </div>
 
   <ul class="nav-menu" id="nav-menu" role="list">
+    <li class="nav-menu-search">
+      <form method="GET" action="/search" class="nav-menu-search-form" role="search">
+        <label for="mobile-nav-search-q" class="sr-only">Search users</label>
+        <input id="mobile-nav-search-q" name="q" type="search" value="<%= navSearchValue %>" placeholder="Search @username" class="nav-search-input">
+        <button type="submit" class="btn-primary btn-sm">Search</button>
+      </form>
+    </li>
     <% if (currentUser) { %>
       <li><a href="/" class="nav-link">Home</a></li>
       <li><a href="/users/<%= currentUser.username %>" class="nav-link">Profile</a></li>
@@ -51,6 +64,11 @@
           <button type="submit" class="nav-link nav-logout">Logout</button>
         </form>
       </li>
+    <% } else { %>
+      <li><a href="/explore" class="nav-link">Explore</a></li>
+      <li><a href="/login" class="nav-link">Login</a></li>
+      <li><a href="/register" class="nav-link">Register</a></li>
+      <li><button type="button" id="theme-toggle" class="nav-link nav-toggle-theme">Theme</button></li>
     <% } %>
   </ul>
 </nav>
