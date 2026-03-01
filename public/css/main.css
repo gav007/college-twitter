@@ -111,16 +111,26 @@ a {
   z-index: 100;
   background: var(--color-bg);
   border-bottom: 1px solid var(--color-border);
+  min-height: 64px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  max-width: 1024px;
+  margin: 0 auto;
 }
 
 .nav-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 16px;
-  height: 56px;
-  max-width: 600px;
-  margin: 0 auto;
+  gap: 10px;
+  padding: 0;
+  height: 64px;
+  max-width: none;
+  margin: 0;
+  flex: 0 0 auto;
 }
 
 .nav-logo {
@@ -158,15 +168,24 @@ a {
 .nav-menu {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
   gap: 4px;
   list-style: none;
-  margin: 0 auto;
-  padding: 8px 16px 10px;
-  max-width: 600px;
+  margin: 0;
+  padding: 0;
+  max-width: none;
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .nav-menu form {
+  display: flex;
   margin: 0;
+}
+
+.nav-menu li {
+  flex: 0 0 auto;
 }
 
 .nav-link {
@@ -174,14 +193,24 @@ a {
   align-items: center;
   justify-content: center;
   min-height: 44px;
-  padding: 10px 12px;
+  padding: 8px 10px;
   border: 0;
   border-radius: 8px;
   background: transparent;
   color: var(--color-text);
   text-decoration: none;
   font: inherit;
+  white-space: nowrap;
   cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+button.nav-link,
+.nav-menu button.nav-link {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .nav-link:hover,
@@ -757,6 +786,20 @@ select {
 }
 
 @media (max-width: 639px) {
+  .site-nav {
+    display: block;
+    min-height: 0;
+    padding: 0;
+    max-width: none;
+  }
+
+  .nav-bar {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 0 16px;
+    height: 56px;
+  }
+
   .nav-hamburger {
     display: flex;
   }
