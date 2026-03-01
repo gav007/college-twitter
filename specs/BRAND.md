@@ -22,6 +22,6 @@
 - Prefer low-risk copy updates over large template refactors.
 
 ## Definition of Done
-- [ ] Header/nav/title updated to `Loopfeed`.
-- [ ] Error/auth copy is brand-consistent.
-- [ ] No route breakage from branding changes.
+- [x] Header/nav/title updated to `Loopfeed`.
+- [x] Error/auth copy is brand-consistent.
+- [x] No route breakage from branding changes.

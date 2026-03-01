@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: 'college-twitter',
+      name: 'loopfeed',
       script: 'server.js',
       cwd: '/home/ec2-user/projects/college-twitter',
       instances: 1,

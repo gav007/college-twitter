@@ -52,5 +52,5 @@ curl (cookie jar) flow:
 2. From another machine:
    - `curl -i http://<public-ip>/`
 3. Health checks:
-   - `pm2 status` shows `college-twitter` as online
+   - `pm2 status` shows `loopfeed` as online
    - `sudo systemctl status nginx` is active

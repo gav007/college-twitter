@@ -20,7 +20,7 @@ $ sudo systemctl status nginx --no-pager
 Active: active (running)
 
 $ pm2 status
-college-twitter ... status online
+loopfeed ... status online
 
 $ sudo certbot certificates
 Domains: loopfeed.duckdns.org

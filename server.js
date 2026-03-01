@@ -5,5 +5,5 @@ const app = require('./app');
 const port = Number(process.env.PORT) || 3000;
 
 app.listen(port, () => {
-  console.log(`College Twitter listening on port ${port}`);
+  console.log(`Loopfeed listening on port ${port}`);
 });

@@ -58,9 +58,9 @@ Generate a secret:
 - Status:
   - `pm2 status`
 - Logs:
-  - `pm2 logs college-twitter --lines 200`
+  - `pm2 logs loopfeed --lines 200`
 - Restart:
-  - `pm2 restart college-twitter`
+  - `pm2 restart loopfeed`
 - Boot persistence:
   - `pm2 save`
   - `pm2 startup` (run the printed command)
@@ -87,7 +87,7 @@ Generate a secret:
 - `cd /home/ec2-user/projects/college-twitter`
 - `git pull`
 - `npm install` (only if dependencies changed)
-- `pm2 restart college-twitter`
+- `pm2 restart loopfeed`
 
 ## Backups
 

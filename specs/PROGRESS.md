@@ -68,6 +68,16 @@ This file tracks what has been built. Update checkboxes as you complete each ite
 - [x] GitHub Actions workflow added for push/PR E2E execution.
 - [ ] CI run on GitHub validated green at least once.
 
+## Phase 10: Branding and UI
+- [x] Title/header/footer branding switched to `Loopfeed`.
+- [x] PM2 process renamed to `loopfeed`.
+- [x] Rebrand completed without route or behavior regressions.
+
+## Phase 11: Dark Mode
+- [x] Theme tokens and system-preference dark mode implemented.
+- [x] Manual theme toggle added with `localStorage` persistence.
+- [x] Playwright test verifies theme persistence after refresh.
+
 ---
 
 ## Required npm Dependencies
@@ -154,7 +164,7 @@ RESTORE_BOOT=restore-db-ok
 
 ```text
 $ pm2 status
-college-twitter ... status online
+loopfeed ... status online
 
 $ sudo systemctl status nginx --no-pager
 Active: active (running)
@@ -231,4 +241,34 @@ Running 3 tests using 1 worker
   ✓ thread reply flow increments reply count
   ✓ follow user then verify feed and explore regression
 3 passed (8.7s)
+```
+
+## Phase 10 Verification Outputs (March 1, 2026)
+
+```text
+$ pm2 status
+│ 0  │ loopfeed │ ... │ status online │
+```
+
+```text
+$ curl -s -o /tmp/phase10-login.html -w "HTTP=%{http_code}\n" https://loopfeed.duckdns.org/login
+HTTP=200
+
+$ rg -n "<title>|class=\"brand\"|Loopfeed - lightweight social feed|id=\"theme-toggle\"" /tmp/phase10-login.html
+6:  <title>Login | Loopfeed</title>
+14:    <a href="/" class="brand">Loopfeed</a>
+17:      <button type="button" id="theme-toggle" class="link-btn theme-toggle" aria-label="Toggle theme">
+48:    <p>Loopfeed - lightweight social feed</p>
+```
+
+## Phase 11 Verification Outputs (March 1, 2026)
+
+```text
+$ npm run test:e2e
+Running 4 tests using 1 worker
+  ✓ register -> login -> create tweet
+  ✓ thread reply flow increments reply count
+  ✓ follow user then verify feed and explore regression
+  ✓ theme toggle persists after refresh
+4 passed (8.8s)
 ```

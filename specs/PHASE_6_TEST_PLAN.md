@@ -44,7 +44,7 @@ Validate hardening controls from `PHASE_6_HARDENING.md` with explicit pass/fail 
 ### F. Reboot Recovery
 1. Reboot instance.
 2. Verify:
-   - `pm2 status` shows `college-twitter` online.
+   - `pm2 status` shows `loopfeed` online.
    - `systemctl status nginx` active.
    - HTTPS URL responds.
 

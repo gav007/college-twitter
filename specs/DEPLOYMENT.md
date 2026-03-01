@@ -53,7 +53,7 @@ node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 ```js
 module.exports = {
   apps: [{
-    name: 'college-twitter',
+    name: 'loopfeed',
     script: 'server.js',
     cwd: '/home/ec2-user/projects/college-twitter',
     instances: 1,
@@ -132,14 +132,14 @@ app.set('trust proxy', 1);
 cd /home/ec2-user/projects/college-twitter
 git pull
 npm install           # only if package.json changed
-pm2 restart college-twitter
+pm2 restart loopfeed
 ```
 
 ## Useful Commands
 ```bash
 pm2 status             # check app is running
-pm2 logs college-twitter  # tail logs
-pm2 logs college-twitter --lines 100  # last 100 lines
+pm2 logs loopfeed  # tail logs
+pm2 logs loopfeed --lines 100  # last 100 lines
 pm2 monit              # live CPU/RAM dashboard
 
 # SQLite quick checks
