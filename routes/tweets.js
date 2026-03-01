@@ -6,6 +6,67 @@ const { writeLimiter } = require('../middleware/rateLimit');
 
 const router = express.Router();
 
+router.get('/tweets/:id', (req, res, next) => {
+  try {
+    const tweetId = Number(req.params.id);
+    if (!Number.isInteger(tweetId)) {
+      return res.status(400).render('error', { status: 400, message: 'Invalid tweet id' });
+    }
+
+    const currentUserId = req.session.userId || 0;
+    const parentTweet = db
+      .prepare(
+        `SELECT
+          t.id,
+          t.user_id,
+          t.content,
+          t.created_at,
+          u.username,
+          u.display_name,
+          COUNT(DISTINCT l.user_id) AS like_count,
+          COUNT(DISTINCT r.id) AS reply_count,
+          MAX(CASE WHEN l.user_id = ? THEN 1 ELSE 0 END) AS liked_by_me
+        FROM tweets t
+        JOIN users u ON u.id = t.user_id
+        LEFT JOIN likes l ON l.tweet_id = t.id
+        LEFT JOIN replies r ON r.tweet_id = t.id
+        WHERE t.id = ?
+        GROUP BY t.id`
+      )
+      .get(currentUserId, tweetId);
+
+    if (!parentTweet) {
+      return res.status(404).render('error', { status: 404, message: 'Tweet not found' });
+    }
+
+    const replies = db
+      .prepare(
+        `SELECT
+          r.id,
+          r.tweet_id,
+          r.user_id,
+          r.content,
+          r.created_at,
+          u.username,
+          u.display_name
+        FROM replies r
+        JOIN users u ON u.id = r.user_id
+        WHERE r.tweet_id = ?
+        ORDER BY r.created_at ASC, r.id ASC
+        LIMIT 200`
+      )
+      .all(tweetId);
+
+    return res.render('thread', {
+      tweet: parentTweet,
+      replies,
+      error: req.query.error || null
+    });
+  } catch (err) {
+    return next(err);
+  }
+});
+
 router.post('/tweets', requireAuth, writeLimiter, (req, res, next) => {
   try {
     const content = (req.body.content || '').trim();
@@ -20,6 +81,39 @@ router.post('/tweets', requireAuth, writeLimiter, (req, res, next) => {
 
     db.prepare('INSERT INTO tweets (user_id, content) VALUES (?, ?)').run(req.session.userId, content);
     return res.redirect('/');
+  } catch (err) {
+    return next(err);
+  }
+});
+
+router.post('/tweets/:id/replies', requireAuth, writeLimiter, (req, res, next) => {
+  try {
+    const tweetId = Number(req.params.id);
+    if (!Number.isInteger(tweetId)) {
+      return res.status(400).render('error', { status: 400, message: 'Invalid tweet id' });
+    }
+
+    const parentTweet = db.prepare('SELECT id FROM tweets WHERE id = ?').get(tweetId);
+    if (!parentTweet) {
+      return res.status(404).render('error', { status: 404, message: 'Tweet not found' });
+    }
+
+    const content = (req.body.content || '').trim();
+    if (!content) {
+      return res.redirect(`/tweets/${tweetId}?error=Reply%20cannot%20be%20empty`);
+    }
+
+    if (content.length > 280) {
+      return res.redirect(`/tweets/${tweetId}?error=Reply%20cannot%20exceed%20280%20characters`);
+    }
+
+    db.prepare('INSERT INTO replies (tweet_id, user_id, content) VALUES (?, ?, ?)').run(
+      tweetId,
+      req.session.userId,
+      content
+    );
+
+    return res.redirect(`/tweets/${tweetId}`);
   } catch (err) {
     return next(err);
   }

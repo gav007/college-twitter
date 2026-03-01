@@ -18,6 +18,11 @@
       <span class="like-count-static">♥ <%= tweet.like_count %></span>
     <% } %>
 
+    <a href="/tweets/<%= tweet.id %>" class="reply-link">Reply</a>
+    <a href="/tweets/<%= tweet.id %>" class="reply-count-link">
+      Replies <span class="reply-count"><%= tweet.reply_count || 0 %></span>
+    </a>
+
     <% if (currentUser && currentUser.id === tweet.user_id) { %>
       <form method="POST" action="/tweets/<%= tweet.id %>/delete" class="delete-form">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">

@@ -76,8 +76,8 @@ LIMIT 200;
 - Authorization and validation follow existing tweet rules.
 
 ## Definition of Done
-- [ ] Reply table migrated successfully.
-- [ ] Users can add replies to tweets.
-- [ ] Thread page renders parent + replies.
-- [ ] Reply count visible on tweet card.
-- [ ] All Phase 6 protections apply on reply endpoint.
+- [x] Reply table migrated successfully.
+- [x] Users can add replies to tweets.
+- [x] Thread page renders parent + replies.
+- [x] Reply count visible on tweet card.
+- [x] All Phase 6 protections apply on reply endpoint.

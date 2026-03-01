@@ -55,6 +55,13 @@ This file tracks what has been built. Update checkboxes as you complete each ite
 - [x] Restore drill executed and documented
 - [x] Reboot recovery test (manual run still needed)
 
+## Phase 7: Replies and Thread View
+- [x] Reply table migrated successfully.
+- [x] Users can add replies to tweets.
+- [x] Thread page renders parent + replies.
+- [x] Reply count visible on tweet card.
+- [x] All Phase 6 protections apply on reply endpoint.
+
 ---
 
 ## Required npm Dependencies
@@ -145,4 +152,50 @@ college-twitter ... status online
 
 $ sudo systemctl status nginx --no-pager
 Active: active (running)
+```
+
+## Phase 7 Verification Outputs (March 1, 2026)
+
+```text
+$ DB_PATH=/tmp/phase7-migration.db node (sqlite_master check)
+index:idx_replies_created_at
+index:idx_replies_tweet_id
+index:idx_replies_user_id
+table:replies
+REPLIES_TABLE_COUNT_QUERY_OK=0
+```
+
+```text
+$ Phase 7 HTTP verification flow on local server (DB_PATH=/tmp/phase7-e2e.db, PORT=3110)
+REGISTER_A_STATUS=302
+REGISTER_A_LOCATION=/
+REGISTER_B_STATUS=302
+REGISTER_B_LOCATION=/
+PARENT_POST_STATUS=302
+PARENT_TWEET_ID=1
+REPLY_CREATE_STATUS=302
+REPLY_CREATE_LOCATION=/tweets/1
+THREAD_STATUS=200
+THREAD_HAS_PARENT=true
+THREAD_HAS_REPLY=true
+HOME_HAS_REPLY_COUNT=true
+REPLY_EMPTY_STATUS=302
+REPLY_EMPTY_LOCATION=/tweets/1?error=Reply%20cannot%20be%20empty
+REPLY_281_STATUS=302
+REPLY_281_LOCATION=/tweets/1?error=Reply%20cannot%20exceed%20280%20characters
+REPLY_LOGGED_OUT_STATUS=302
+REPLY_LOGGED_OUT_LOCATION=/login
+REPLY_NO_CSRF_STATUS=403
+REPLY_NO_CSRF_HAS_MESSAGE=true
+THREAD_ORDER_LINE_A=113
+THREAD_ORDER_LINE_B=124
+THREAD_ORDER_ASC=true
+RATE_LIMIT_FIRST_429_ATTEMPT=26
+RATE_LIMIT_LAST_CODE=429
+REG_POST_STATUS=302
+REG_FOLLOW_STATUS=302
+REG_LIKE_STATUS=200
+REG_LIKE_PAYLOAD={"liked":true,"like_count":1}
+REG_EXPLORE_STATUS=200
+REG_EXPLORE_HAS_TWEET=true
 ```

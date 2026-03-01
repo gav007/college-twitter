@@ -1,0 +1,60 @@
+<%- include('layout/header', { title: 'Thread' }) %>
+<%- include('layout/nav') %>
+
+<main class="container page-container">
+  <% if (error) { %>
+    <p class="form-error"><%= error %></p>
+  <% } %>
+
+  <section>
+    <h1>Thread</h1>
+    <%- include('partials/tweet-card', { tweet: tweet }) %>
+  </section>
+
+  <section class="panel">
+    <h2>Replies</h2>
+    <% if (currentUser) { %>
+      <form method="POST" action="/tweets/<%= tweet.id %>/replies">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <label for="reply-content" class="sr-only">Write your reply</label>
+        <textarea
+          id="reply-content"
+          name="content"
+          class="tweet-textarea"
+          maxlength="280"
+          required
+          placeholder="Write your reply"
+        ></textarea>
+        <div class="compose-footer">
+          <span class="char-counter">280</span>
+          <button type="submit" class="btn-primary">Reply</button>
+        </div>
+      </form>
+    <% } else { %>
+      <p class="muted"><a href="/login">Log in</a> to reply.</p>
+    <% } %>
+  </section>
+
+  <section class="panel">
+    <% if (!replies.length) { %>
+      <p class="muted">No replies yet.</p>
+    <% } %>
+
+    <% replies.forEach((reply) => { %>
+      <article class="reply-card">
+        <div class="tweet-header">
+          <a href="/users/<%= reply.username %>" class="tweet-author">
+            <strong><%= reply.display_name %></strong>
+            <span class="tweet-username">@<%= reply.username %></span>
+          </a>
+          <time class="tweet-time"><%= formatTime(reply.created_at) %></time>
+        </div>
+        <p class="tweet-content"><%= reply.content %></p>
+      </article>
+    <% }) %>
+  </section>
+</main>
+
+<script src="/public/js/app.js"></script>
+</body>
+</html>

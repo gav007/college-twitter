@@ -202,6 +202,7 @@ a {
 .tweet-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
 }
 
@@ -228,6 +229,29 @@ a {
 
 .delete-btn {
   color: #a61b1b;
+}
+
+.reply-link,
+.reply-count-link {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.reply-link:hover,
+.reply-count-link:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.reply-card {
+  border-top: 1px solid var(--border);
+  padding: 12px 0;
+}
+
+.reply-card:first-child {
+  border-top: 0;
+  padding-top: 0;
 }
 
 .profile-header h1,

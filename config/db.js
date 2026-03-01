@@ -48,6 +48,17 @@ db.exec(`
   );
   CREATE INDEX IF NOT EXISTS idx_likes_tweet_id ON likes(tweet_id);
 
+  CREATE TABLE IF NOT EXISTS replies (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tweet_id INTEGER NOT NULL REFERENCES tweets(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    content TEXT NOT NULL CHECK(length(content) <= 280 AND length(content) >= 1),
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_replies_tweet_id ON replies(tweet_id);
+  CREATE INDEX IF NOT EXISTS idx_replies_user_id ON replies(user_id);
+  CREATE INDEX IF NOT EXISTS idx_replies_created_at ON replies(created_at DESC);
+
   CREATE TABLE IF NOT EXISTS sessions (
     sid TEXT PRIMARY KEY,
     sess TEXT NOT NULL,
