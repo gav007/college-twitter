@@ -4,6 +4,7 @@ const fs = require('fs');
 const db = require('../config/db');
 const requireAuth = require('../middleware/requireAuth');
 const { writeLimiter } = require('../middleware/rateLimit');
+const { onReplyCreated, onTweetCreated, onTweetLiked } = require('../services/engagement');
 const { createFollowedPostNotifications, createReplyNotification } = require('../services/notifications');
 const {
   buildStoredImagePath,
@@ -184,6 +185,7 @@ router.post('/tweets', requireAuth, writeLimiter, (req, res, next) => {
     }
 
     createFollowedPostNotifications(req.session.userId, tweetId);
+    onTweetCreated(req.session.userId);
 
     return res.redirect('/');
   } catch (err) {
@@ -230,6 +232,7 @@ router.post('/tweets/:id/replies', requireAuth, writeLimiter, (req, res, next) =
       content
     );
     createReplyNotification(parentTweet.user_id, req.session.userId, tweetId);
+    onReplyCreated(req.session.userId, parentTweet.user_id);
 
     return res.redirect(`/tweets/${tweetId}`);
   } catch (err) {
@@ -271,7 +274,7 @@ router.post('/tweets/:id/like', requireAuth, writeLimiter, (req, res, next) => {
 
     const tweet = db
       .prepare(
-        `SELECT id
+        `SELECT id, user_id
         FROM tweets t
         WHERE t.id = ?
           AND NOT EXISTS (
@@ -297,6 +300,7 @@ router.post('/tweets/:id/like', requireAuth, writeLimiter, (req, res, next) => {
     } else {
       db.prepare('INSERT INTO likes (user_id, tweet_id) VALUES (?, ?)').run(req.session.userId, tweetId);
       liked = true;
+      onTweetLiked(tweet.user_id);
     }
 
     const row = db.prepare('SELECT COUNT(*) AS like_count FROM likes WHERE tweet_id = ?').get(tweetId);

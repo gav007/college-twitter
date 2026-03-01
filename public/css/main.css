@@ -548,6 +548,31 @@ select {
   background: var(--color-surface);
 }
 
+.engagement-panel {
+  margin-bottom: 16px;
+}
+
+.engagement-panel h2 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.engagement-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.engagement-link {
+  text-decoration: none;
+}
+
+.engagement-next {
+  margin: 10px 0 0;
+  color: var(--color-text-muted);
+}
+
 .tweet-card {
   width: 100%;
   min-width: 0;
@@ -769,6 +794,62 @@ select {
   margin-top: 14px;
 }
 
+.profile-progress {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-border);
+}
+
+.profile-progress h2 {
+  margin: 10px 0 8px;
+}
+
+.profile-streak-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.progress-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface-alt);
+  padding: 6px 10px;
+  font-size: 0.9rem;
+}
+
+.achievement-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.achievement-card {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: var(--color-surface-alt);
+  padding: 10px;
+}
+
+.achievement-icon {
+  margin: 0 0 4px;
+  font-size: 1.2rem;
+}
+
+.achievement-title {
+  margin: 0;
+  font-weight: 700;
+}
+
+.achievement-description {
+  margin: 4px 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+}
+
 .profile-edit-panel {
   margin-top: 18px;
   padding-top: 16px;
@@ -986,6 +1067,10 @@ select {
   }
 
   .profile-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .achievement-grid {
     grid-template-columns: 1fr;
   }
 }

@@ -31,6 +31,30 @@
       </article>
     </div>
 
+    <% if (profileEngagement) { %>
+      <section class="profile-progress">
+        <div class="profile-streak-row">
+          <span class="progress-chip">🔥 <strong><%= profileEngagement.streak.current %></strong> day streak</span>
+          <span class="progress-chip">🏆 Best <strong><%= profileEngagement.streak.best %></strong></span>
+        </div>
+
+        <h2>Achievements</h2>
+        <% if (!profileEngagement.unlockedAchievements.length) { %>
+          <p class="muted">No achievements unlocked yet.</p>
+        <% } else { %>
+          <div class="achievement-grid">
+            <% profileEngagement.unlockedAchievements.forEach((achievement) => { %>
+              <article class="achievement-card">
+                <p class="achievement-icon"><%= achievement.icon %></p>
+                <p class="achievement-title"><%= achievement.title %></p>
+                <p class="achievement-description"><%= achievement.description %></p>
+              </article>
+            <% }) %>
+          </div>
+        <% } %>
+      </section>
+    <% } %>
+
     <% if (currentUser && currentUser.id !== profileUser.id) { %>
       <div class="profile-actions">
         <form method="POST" action="/users/<%= profileUser.username %>/follow">

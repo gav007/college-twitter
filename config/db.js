@@ -84,6 +84,22 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC);
   CREATE INDEX IF NOT EXISTS idx_notifications_unread ON notifications(user_id, read_at);
 
+  CREATE TABLE IF NOT EXISTS user_streaks (
+    user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    current_streak INTEGER NOT NULL DEFAULT 0 CHECK(current_streak >= 0),
+    best_streak INTEGER NOT NULL DEFAULT 0 CHECK(best_streak >= 0),
+    last_activity_date TEXT,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS user_achievements (
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    code TEXT NOT NULL,
+    unlocked_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (user_id, code)
+  );
+  CREATE INDEX IF NOT EXISTS idx_user_achievements_user_id ON user_achievements(user_id);
+
   CREATE TABLE IF NOT EXISTS sessions (
     sid TEXT PRIMARY KEY,
     sess TEXT NOT NULL,

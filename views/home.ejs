@@ -6,6 +6,25 @@
     <p class="form-error"><%= error %></p>
   <% } %>
 
+  <% if (currentUser && engagement) { %>
+    <section class="panel engagement-panel">
+      <div class="engagement-panel-head">
+        <div>
+          <h2>Your Streak</h2>
+          <p class="muted"><strong><%= engagement.streak.current %> day<%= engagement.streak.current === 1 ? '' : 's' %></strong> active streak · best <strong><%= engagement.streak.best %></strong></p>
+        </div>
+        <a href="/users/<%= currentUser.username %>" class="btn-secondary engagement-link">View profile</a>
+      </div>
+
+      <% if (engagement.nextAchievement) { %>
+        <p class="engagement-next">
+          Next achievement: <strong><%= engagement.nextAchievement.title %></strong>
+          (<%= engagement.nextAchievement.current %>/<%= engagement.nextAchievement.target %>)
+        </p>
+      <% } %>
+    </section>
+  <% } %>
+
   <% if (currentUser) { %>
     <section class="compose-box">
       <form method="POST" action="/tweets" enctype="multipart/form-data">

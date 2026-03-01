@@ -3,6 +3,7 @@ const express = require('express');
 const db = require('../config/db');
 const requireAuth = require('../middleware/requireAuth');
 const { writeLimiter } = require('../middleware/rateLimit');
+const { getUserEngagementSummary } = require('../services/engagement');
 
 const router = express.Router();
 const USERNAME_REGEX = /^[A-Za-z0-9_]{3,20}$/;
@@ -78,10 +79,12 @@ router.get('/users/:username', (req, res, next) => {
         LIMIT 50`
       )
       .all(currentUserId, username);
+    const profileEngagement = getUserEngagementSummary(profileUser.id);
 
     return res.render('profile', {
       profileUser,
       tweets,
+      profileEngagement,
       isFollowing,
       notifyPostsEnabled,
       profileError: req.query.error || null,

@@ -2,6 +2,7 @@ const express = require('express');
 
 const db = require('../config/db');
 const requireAuth = require('../middleware/requireAuth');
+const { getUserEngagementSummary } = require('../services/engagement');
 
 const router = express.Router();
 
@@ -41,9 +42,11 @@ router.get('/', requireAuth, (req, res, next) => {
         LIMIT 50`
       )
       .all(currentUserId, currentUserId, currentUserId);
+    const engagement = getUserEngagementSummary(currentUserId);
 
     return res.render('home', {
       tweets,
+      engagement,
       error: req.query.error || null
     });
   } catch (err) {

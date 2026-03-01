@@ -81,6 +81,27 @@ test('profile settings can update username and bio', async ({ page }) => {
   await expect(page.locator('.profile-bio')).toHaveText(nextBio);
 });
 
+test('profile shows streak and unlocks post/reply achievements', async ({ page }) => {
+  const user = buildUser('hookuser');
+  const tweetContent = `hook-post-${uniqueSuffix()}`;
+  const replyContent = `hook-reply-${uniqueSuffix()}`;
+
+  await register(page, user);
+  await createTweet(page, tweetContent);
+
+  await page.goto(`/users/${user.username}`);
+  await expect(page.locator('.achievement-title', { hasText: 'First Post' })).toBeVisible();
+  await expect(page.locator('.progress-chip').first()).toContainText('day streak');
+
+  const postCard = page.locator('.tweet-card', { hasText: tweetContent }).first();
+  await postCard.getByRole('link', { name: 'Reply', exact: true }).click();
+  await page.locator('#reply-content').fill(replyContent);
+  await page.getByRole('button', { name: 'Reply' }).click();
+
+  await page.goto(`/users/${user.username}`);
+  await expect(page.locator('.achievement-title', { hasText: 'First Reply' })).toBeVisible();
+});
+
 test('thread reply flow increments reply count', async ({ page }) => {
   const user = buildUser('replyuser');
   const parentContent = `thread-parent-${uniqueSuffix()}`;
