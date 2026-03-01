@@ -8,3 +8,33 @@
   <link rel="stylesheet" href="/public/css/main.css">
 </head>
 <body>
+<% if (currentUser) { %>
+<dialog id="global-compose-modal" class="compose-modal" aria-label="New post">
+  <div class="compose-modal-inner">
+    <div class="compose-modal-header">
+      <span class="compose-modal-title">New Post</span>
+      <button class="compose-modal-close" onclick="this.closest('dialog').close()" aria-label="Close" type="button">✕</button>
+    </div>
+    <form method="POST" action="/tweets?source=modal" class="compose-form-modal" enctype="multipart/form-data">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <textarea
+        name="content"
+        class="tweet-textarea"
+        placeholder="What's happening?"
+        maxlength="280"
+        rows="4"
+        autofocus
+        required
+      ></textarea>
+      <div class="compose-footer">
+        <span class="char-counter">280</span>
+        <label class="file-upload-label" aria-label="Attach image">
+          📎
+          <input type="file" name="image" accept="image/jpeg,image/png,image/webp" class="file-input-hidden">
+        </label>
+        <button type="submit" class="btn-primary">Post</button>
+      </div>
+    </form>
+  </div>
+</dialog>
+<% } %>

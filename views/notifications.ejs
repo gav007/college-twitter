@@ -1,0 +1,48 @@
+<%- include('layout/header', { title: 'Notifications' }) %>
+<%- include('layout/nav') %>
+
+<main class="container page-container">
+  <section class="panel notifications-panel">
+    <div class="notifications-header">
+      <h1>Notifications</h1>
+      <% if (notifications.length) { %>
+        <form method="POST" action="/notifications/read-all">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="btn-mark-read">Mark all read</button>
+        </form>
+      <% } %>
+    </div>
+
+    <% if (!notifications.length) { %>
+      <p class="muted">No notifications yet.</p>
+    <% } else { %>
+      <ul class="notifications-list" aria-live="polite">
+        <% notifications.forEach((notification) => { %>
+          <li class="notification-item <%= notification.read_at ? '' : 'is-unread' %>" role="listitem">
+            <div class="notif-icon" aria-hidden="true">
+              <%= notification.type === 'reply_to_you' ? '💬' : '👤' %>
+            </div>
+
+            <div class="notif-body">
+              <p class="notif-text">
+                <a href="/users/<%= notification.actor_username %>">@<%= notification.actor_username %></a>
+                <% if (notification.type === 'reply_to_you') { %>
+                  replied to your tweet.
+                <% } else { %>
+                  posted a new tweet.
+                <% } %>
+              </p>
+              <span class="notif-meta"><%= formatTime(notification.created_at) %></span>
+            </div>
+
+            <% if (notification.tweet_id) { %>
+              <a href="/tweets/<%= notification.tweet_id %>" class="notif-action">View →</a>
+            <% } %>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </section>
+</main>
+
+<%- include('layout/footer') %>

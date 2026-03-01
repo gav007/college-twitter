@@ -23,6 +23,32 @@
     <% } %>
   </section>
 
+  <% if (currentUser) { %>
+    <section class="explore-compose" aria-label="Compose a post">
+      <form method="POST" action="/tweets" class="compose-form-inline" enctype="multipart/form-data">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <div class="compose-inline-row">
+          <textarea
+            name="content"
+            class="tweet-textarea compose-inline-textarea"
+            placeholder="Post something to the feed..."
+            maxlength="280"
+            rows="2"
+            required
+          ></textarea>
+        </div>
+        <div class="compose-footer">
+          <span class="char-counter">280</span>
+          <label class="file-upload-label" aria-label="Attach image">
+            📎
+            <input type="file" name="image" accept="image/jpeg,image/png,image/webp" class="file-input-hidden">
+          </label>
+          <button type="submit" class="btn-primary btn-sm">Post</button>
+        </div>
+      </form>
+    </section>
+  <% } %>
+
   <section>
     <h2>Recent tweets</h2>
     <% if (!tweets.length) { %>

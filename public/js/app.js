@@ -71,6 +71,69 @@ if (themeToggle) {
   });
 }
 
+// Mobile nav toggle
+(function initMobileNav() {
+  const hamburger = document.querySelector('.nav-hamburger');
+  const menu = document.getElementById('nav-menu');
+  if (!hamburger || !menu) {
+    return;
+  }
+
+  hamburger.addEventListener('click', () => {
+    const isOpen = menu.classList.toggle('is-open');
+    hamburger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    hamburger.setAttribute('aria-label', isOpen ? 'Close menu' : 'Open menu');
+  });
+
+  menu.querySelectorAll('a, button').forEach((el) => {
+    el.addEventListener('click', () => {
+      menu.classList.remove('is-open');
+      hamburger.setAttribute('aria-expanded', 'false');
+      hamburger.setAttribute('aria-label', 'Open menu');
+    });
+  });
+
+  document.addEventListener('click', (event) => {
+    const target = event.target;
+    if (!(target instanceof Node)) {
+      return;
+    }
+
+    if (!hamburger.contains(target) && !menu.contains(target)) {
+      menu.classList.remove('is-open');
+      hamburger.setAttribute('aria-expanded', 'false');
+      hamburger.setAttribute('aria-label', 'Open menu');
+    }
+  });
+})();
+
+// Global compose modal behavior
+(function initGlobalComposeModal() {
+  const modal = document.getElementById('global-compose-modal');
+  if (!modal) {
+    return;
+  }
+
+  modal.addEventListener('click', (event) => {
+    if (event.target === modal) {
+      modal.close();
+    }
+  });
+
+  modal.addEventListener('close', () => {
+    const form = modal.querySelector('form');
+    if (form) {
+      form.reset();
+    }
+
+    const counter = modal.querySelector('.char-counter');
+    if (counter) {
+      counter.textContent = '280';
+      counter.classList.remove('danger');
+    }
+  });
+})();
+
 document.querySelectorAll('.tweet-textarea').forEach((textarea) => {
   const form = textarea.closest('form');
   const counter = form ? form.querySelector('.char-counter') : null;

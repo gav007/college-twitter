@@ -9,12 +9,17 @@
 
   <p class="tweet-content"><%= tweet.content %></p>
   <% if (tweet.media_id) { %>
-    <img
-      src="/media/<%= tweet.media_id %>"
-      alt="Tweet media"
-      class="tweet-image"
-      loading="lazy"
-    >
+    <div class="tweet-media">
+      <img
+        src="/media/<%= tweet.media_id %>"
+        alt="Post image"
+        class="tweet-image"
+        loading="lazy"
+      >
+    </div>
+    <p class="media-expiry-badge" aria-label="Image expires soon">
+      <span class="expiry-icon">⏱</span> Image disappears in ~1h
+    </p>
   <% } %>
 
   <div class="tweet-actions">
