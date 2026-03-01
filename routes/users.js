@@ -9,6 +9,20 @@ const router = express.Router();
 const USERNAME_REGEX = /^[A-Za-z0-9_]{3,20}$/;
 const DISPLAY_NAME_MAX_LENGTH = 50;
 const BIO_MAX_LENGTH = 160;
+const AVATAR_URL_MAX_LENGTH = 300;
+
+function isValidAvatarUrl(value) {
+  if (!value) {
+    return true;
+  }
+
+  try {
+    const parsed = new URL(value);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch (_err) {
+    return false;
+  }
+}
 
 router.get('/users/:username', (req, res, next) => {
   try {
@@ -16,7 +30,7 @@ router.get('/users/:username', (req, res, next) => {
     const currentUserId = req.session.userId || 0;
 
     const profileUser = db
-      .prepare('SELECT id, username, display_name, bio, created_at FROM users WHERE username = ?')
+      .prepare('SELECT id, username, display_name, bio, avatar_url, created_at FROM users WHERE username = ?')
       .get(username);
 
     if (!profileUser) {
@@ -92,7 +106,8 @@ router.get('/users/:username', (req, res, next) => {
       editForm: {
         username: profileUser.username,
         display_name: profileUser.display_name,
-        bio: profileUser.bio || ''
+        bio: profileUser.bio || '',
+        avatar_url: profileUser.avatar_url || ''
       },
       joinedDate,
       tweetCount: counts.tweet_count,
@@ -192,6 +207,7 @@ router.post('/settings/profile', requireAuth, writeLimiter, (req, res, next) => 
     const username = (req.body.username || '').trim();
     const displayName = (req.body.display_name || '').trim();
     const bio = (req.body.bio || '').trim();
+    const avatarUrl = (req.body.avatar_url || '').trim();
 
     if (!USERNAME_REGEX.test(username)) {
       return res.redirect(
@@ -223,6 +239,22 @@ router.post('/settings/profile', requireAuth, writeLimiter, (req, res, next) => 
       );
     }
 
+    if (avatarUrl.length > AVATAR_URL_MAX_LENGTH) {
+      return res.redirect(
+        `/users/${currentUser.username}?error=${encodeURIComponent(
+          `Avatar URL must be ${AVATAR_URL_MAX_LENGTH} characters or fewer.`
+        )}`
+      );
+    }
+
+    if (!isValidAvatarUrl(avatarUrl)) {
+      return res.redirect(
+        `/users/${currentUser.username}?error=${encodeURIComponent(
+          'Avatar URL must be a valid HTTP or HTTPS URL.'
+        )}`
+      );
+    }
+
     const existingUser = db
       .prepare('SELECT id FROM users WHERE username = ? AND id != ?')
       .get(username, userId);
@@ -233,10 +265,11 @@ router.post('/settings/profile', requireAuth, writeLimiter, (req, res, next) => 
       );
     }
 
-    db.prepare('UPDATE users SET username = ?, display_name = ?, bio = ? WHERE id = ?').run(
+    db.prepare('UPDATE users SET username = ?, display_name = ?, bio = ?, avatar_url = ? WHERE id = ?').run(
       username,
       displayName,
       bio,
+      avatarUrl,
       userId
     );
 

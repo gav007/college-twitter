@@ -6,10 +6,17 @@
     <div class="nav-actions-right">
       <a href="/explore" class="nav-link nav-priority-link">Explore</a>
       <% if (currentUser) { %>
+        <a href="/users/<%= currentUser.username %>" class="nav-avatar-link nav-priority-link" aria-label="Open profile">
+          <% if (currentUser.avatar_url) { %>
+            <img src="<%= currentUser.avatar_url %>" alt="<%= currentUser.display_name %> avatar" class="nav-avatar-image">
+          <% } else { %>
+            <span class="nav-avatar-fallback"><%= (currentUser.display_name || currentUser.username).slice(0, 1).toUpperCase() %></span>
+          <% } %>
+        </a>
         <a href="/notifications" class="nav-link nav-priority-link">Notifications</a>
         <button
           class="btn-post-global"
-          onclick="document.getElementById('global-compose-modal').showModal()"
+          data-open-compose
           aria-label="Compose"
           type="button"
         >

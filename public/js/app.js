@@ -114,8 +114,33 @@ if (themeToggle) {
     return;
   }
 
+  const openButtons = document.querySelectorAll('[data-open-compose]');
+  openButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      if (modal.open) {
+        return;
+      }
+      if (typeof modal.showModal === 'function') {
+        modal.showModal();
+      } else {
+        modal.setAttribute('open', 'open');
+      }
+    });
+  });
+
+  const closeButtons = modal.querySelectorAll('[data-close-compose]');
+  closeButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+      if (typeof modal.close === 'function') {
+        modal.close();
+      } else {
+        modal.removeAttribute('open');
+      }
+    });
+  });
+
   modal.addEventListener('click', (event) => {
-    if (event.target === modal) {
+    if (event.target === modal && typeof modal.close === 'function') {
       modal.close();
     }
   });

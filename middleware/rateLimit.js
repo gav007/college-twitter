@@ -1,3 +1,5 @@
+const isTestEnv = process.env.NODE_ENV === 'test';
+
 function createRateLimiter(options) {
   const windowMs = options.windowMs;
   const max = options.max;
@@ -35,7 +37,7 @@ function createRateLimiter(options) {
 
 const authLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
-  max: 15
+  max: isTestEnv ? 200 : 15
 });
 
 const writeLimiter = createRateLimiter({

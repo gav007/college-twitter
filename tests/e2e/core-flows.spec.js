@@ -65,6 +65,7 @@ test('profile settings can update username and bio', async ({ page }) => {
   const nextUsername = `renamed${uniqueSuffix()}`.slice(0, 20);
   const nextDisplayName = `Renamed ${uniqueSuffix()}`;
   const nextBio = `Bio updated ${uniqueSuffix()}`;
+  const avatarUrl = `https://example.com/avatar-${uniqueSuffix()}.png`;
 
   await register(page, user);
   await page.goto(`/users/${user.username}`);
@@ -72,6 +73,7 @@ test('profile settings can update username and bio', async ({ page }) => {
   await page.locator('#profile-username').fill(nextUsername);
   await page.locator('#profile-display-name').fill(nextDisplayName);
   await page.locator('#profile-bio').fill(nextBio);
+  await page.locator('#profile-avatar-url').fill(avatarUrl);
   await page.getByRole('button', { name: 'Save Profile' }).click();
 
   await expect(page).toHaveURL(new RegExp(`/users/${nextUsername}\\?updated=1$`));
@@ -79,6 +81,24 @@ test('profile settings can update username and bio', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1, name: nextDisplayName })).toBeVisible();
   await expect(page.getByText(`@${nextUsername}`)).toBeVisible();
   await expect(page.locator('.profile-bio')).toHaveText(nextBio);
+  await expect(page.locator('.profile-avatar-image')).toHaveAttribute('src', avatarUrl);
+  await expect(page.locator('.nav-avatar-image')).toHaveAttribute('src', avatarUrl);
+});
+
+test('global compose button opens modal and can post', async ({ page }) => {
+  const user = buildUser('modaluser');
+  const content = `modal-post-${uniqueSuffix()}`;
+
+  await register(page, user);
+  await page.getByRole('button', { name: 'Compose' }).click();
+
+  const modal = page.locator('#global-compose-modal');
+  await expect(modal).toBeVisible();
+
+  await modal.locator('textarea[name="content"]').fill(content);
+  await modal.getByRole('button', { name: 'Post' }).click();
+
+  await expect(page.getByText(content)).toBeVisible();
 });
 
 test('profile shows streak and unlocks post/reply achievements', async ({ page }) => {
@@ -100,6 +120,22 @@ test('profile shows streak and unlocks post/reply achievements', async ({ page }
 
   await page.goto(`/users/${user.username}`);
   await expect(page.locator('.achievement-title', { hasText: 'First Reply' })).toBeVisible();
+});
+
+test('profile settings reject duplicate username', async ({ page }) => {
+  const existingUser = buildUser('existing');
+  const editingUser = buildUser('editing');
+
+  await register(page, existingUser);
+  await logout(page);
+  await register(page, editingUser);
+
+  await page.goto(`/users/${editingUser.username}`);
+  await page.locator('#profile-username').fill(existingUser.username);
+  await page.getByRole('button', { name: 'Save Profile' }).click();
+
+  await expect(page).toHaveURL(new RegExp(`/users/${editingUser.username}\\?error=`));
+  await expect(page.getByText('Username is already taken.')).toBeVisible();
 });
 
 test('thread reply flow increments reply count', async ({ page }) => {

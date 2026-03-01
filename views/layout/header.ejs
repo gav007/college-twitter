@@ -13,7 +13,7 @@
   <div class="compose-modal-inner">
     <div class="compose-modal-header">
       <span class="compose-modal-title">New Post</span>
-      <button class="compose-modal-close" onclick="this.closest('dialog').close()" aria-label="Close" type="button">✕</button>
+      <button class="compose-modal-close" data-close-compose aria-label="Close" type="button">✕</button>
     </div>
     <form method="POST" action="/tweets?source=modal" class="compose-form-modal" enctype="multipart/form-data">
       <input type="hidden" name="_csrf" value="<%= csrfToken %>">

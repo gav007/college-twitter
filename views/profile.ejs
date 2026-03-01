@@ -4,7 +4,13 @@
 <main class="container page-container profile-page">
   <section class="panel profile-shell">
     <div class="profile-banner"></div>
-    <div class="profile-avatar"><%= (profileUser.display_name || profileUser.username).slice(0, 1).toUpperCase() %></div>
+    <div class="profile-avatar">
+      <% if (profileUser.avatar_url) { %>
+        <img src="<%= profileUser.avatar_url %>" alt="<%= profileUser.display_name %> avatar" class="profile-avatar-image">
+      <% } else { %>
+        <span><%= (profileUser.display_name || profileUser.username).slice(0, 1).toUpperCase() %></span>
+      <% } %>
+    </div>
 
     <div class="profile-headline">
       <h1><%= profileUser.display_name %></h1>
@@ -116,6 +122,16 @@
             maxlength="160"
             placeholder="Write a short bio"
           ><%= editForm.bio %></textarea>
+
+          <label for="profile-avatar-url">Avatar URL</label>
+          <input
+            id="profile-avatar-url"
+            name="avatar_url"
+            type="url"
+            maxlength="300"
+            placeholder="https://example.com/avatar.jpg"
+            value="<%= editForm.avatar_url %>"
+          >
 
           <button type="submit" class="btn-primary">Save Profile</button>
         </form>
