@@ -35,7 +35,11 @@ async function login(page, user) {
 }
 
 async function logout(page) {
-  await page.getByRole('button', { name: 'Logout' }).click();
+  const logoutButton = page.getByRole('button', { name: 'Logout' });
+  if (!(await logoutButton.isVisible())) {
+    await page.getByRole('button', { name: /Open menu|Close menu/ }).click();
+  }
+  await logoutButton.click();
   await expect(page).toHaveURL('/login');
 }
 
@@ -54,6 +58,27 @@ test('register -> login -> create tweet', async ({ page }) => {
   await logout(page);
   await login(page, user);
   await createTweet(page, tweetContent);
+});
+
+test('profile settings can update username and bio', async ({ page }) => {
+  const user = buildUser('profileuser');
+  const nextUsername = `renamed${uniqueSuffix()}`.slice(0, 20);
+  const nextDisplayName = `Renamed ${uniqueSuffix()}`;
+  const nextBio = `Bio updated ${uniqueSuffix()}`;
+
+  await register(page, user);
+  await page.goto(`/users/${user.username}`);
+
+  await page.locator('#profile-username').fill(nextUsername);
+  await page.locator('#profile-display-name').fill(nextDisplayName);
+  await page.locator('#profile-bio').fill(nextBio);
+  await page.getByRole('button', { name: 'Save Profile' }).click();
+
+  await expect(page).toHaveURL(new RegExp(`/users/${nextUsername}\\?updated=1$`));
+  await expect(page.getByText('Profile updated.')).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: nextDisplayName })).toBeVisible();
+  await expect(page.getByText(`@${nextUsername}`)).toBeVisible();
+  await expect(page.locator('.profile-bio')).toHaveText(nextBio);
 });
 
 test('thread reply flow increments reply count', async ({ page }) => {

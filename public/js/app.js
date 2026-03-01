@@ -134,6 +134,90 @@ if (themeToggle) {
   });
 })();
 
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const ALLOWED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
+
+function hasAllowedImageExtension(fileName) {
+  const lower = (fileName || '').toLowerCase();
+  return ALLOWED_IMAGE_EXTENSIONS.some((extension) => lower.endsWith(extension));
+}
+
+function validateImageFile(file) {
+  if (!file) {
+    return '';
+  }
+
+  if (file.size > MAX_IMAGE_BYTES) {
+    return 'Image must be 5 MB or smaller.';
+  }
+
+  const mimeType = (file.type || '').toLowerCase();
+  if (mimeType && !ALLOWED_IMAGE_MIME_TYPES.has(mimeType)) {
+    return 'Only JPG, JPEG, PNG, and WebP images are allowed.';
+  }
+
+  if (!hasAllowedImageExtension(file.name)) {
+    return 'Only JPG, JPEG, PNG, and WebP images are allowed.';
+  }
+
+  return '';
+}
+
+function renderUploadError(form, message) {
+  const errorEl = form.querySelector('[data-upload-error]');
+  if (!errorEl) {
+    return;
+  }
+
+  if (!message) {
+    errorEl.hidden = true;
+    errorEl.textContent = '';
+    return;
+  }
+
+  errorEl.hidden = false;
+  errorEl.textContent = message;
+}
+
+(function initUploadValidation() {
+  document.querySelectorAll('form[enctype="multipart/form-data"]').forEach((form) => {
+    const action = (form.getAttribute('action') || '').split('?')[0];
+    if (action !== '/tweets') {
+      return;
+    }
+
+    const imageInput = form.querySelector('input[name="image"]');
+    if (!imageInput) {
+      return;
+    }
+
+    imageInput.addEventListener('change', () => {
+      const file = imageInput.files && imageInput.files[0] ? imageInput.files[0] : null;
+      const message = validateImageFile(file);
+      if (message) {
+        imageInput.value = '';
+      }
+      renderUploadError(form, message);
+    });
+
+    form.addEventListener('submit', (event) => {
+      const file = imageInput.files && imageInput.files[0] ? imageInput.files[0] : null;
+      const message = validateImageFile(file);
+      if (message) {
+        event.preventDefault();
+        renderUploadError(form, message);
+      } else {
+        renderUploadError(form, '');
+      }
+    });
+
+    form.addEventListener('reset', () => {
+      renderUploadError(form, '');
+    });
+  });
+})();
+
 document.querySelectorAll('.tweet-textarea').forEach((textarea) => {
   const form = textarea.closest('form');
   const counter = form ? form.querySelector('.char-counter') : null;

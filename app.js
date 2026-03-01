@@ -11,6 +11,7 @@ const currentUser = require('./middleware/currentUser');
 const tweetUploadParser = require('./middleware/tweetUploadParser');
 const authRoutes = require('./routes/auth');
 const feedRoutes = require('./routes/feed');
+const notificationRoutes = require('./routes/notifications');
 const tweetRoutes = require('./routes/tweets');
 const userRoutes = require('./routes/users');
 const exploreRoutes = require('./routes/explore');
@@ -140,9 +141,17 @@ app.use('/tweets', tweetUploadParser);
 app.use(csrf.verifyCsrfToken);
 app.use('/', authRoutes);
 app.use('/', feedRoutes);
+app.use('/', notificationRoutes);
 app.use('/', tweetRoutes);
 app.use('/', userRoutes);
 app.use('/', exploreRoutes);
+
+app.all('/errors/upload-too-large', (req, res) => {
+  return res.status(413).render('error', {
+    status: 413,
+    message: 'Image must be 5 MB or smaller.'
+  });
+});
 
 app.use((req, res) => {
   res.status(404);

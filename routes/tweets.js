@@ -4,6 +4,7 @@ const fs = require('fs');
 const db = require('../config/db');
 const requireAuth = require('../middleware/requireAuth');
 const { writeLimiter } = require('../middleware/rateLimit');
+const { createFollowedPostNotifications, createReplyNotification } = require('../services/notifications');
 const {
   buildStoredImagePath,
   deleteFileSafe,
@@ -24,6 +25,8 @@ const createTweetWithOptionalMedia = db.transaction((payload) => {
   if (payload.media) {
     insertTweetMediaStmt.run(tweetId, payload.media.filePath, payload.media.mimeType, payload.media.sizeBytes);
   }
+
+  return tweetId;
 });
 
 router.get('/media/:id', (req, res, next) => {
@@ -166,8 +169,9 @@ router.post('/tweets', requireAuth, writeLimiter, (req, res, next) => {
       };
     }
 
+    let tweetId;
     try {
-      createTweetWithOptionalMedia({
+      tweetId = createTweetWithOptionalMedia({
         userId: req.session.userId,
         content,
         media
@@ -178,6 +182,8 @@ router.post('/tweets', requireAuth, writeLimiter, (req, res, next) => {
       }
       throw err;
     }
+
+    createFollowedPostNotifications(req.session.userId, tweetId);
 
     return res.redirect('/');
   } catch (err) {
@@ -194,7 +200,7 @@ router.post('/tweets/:id/replies', requireAuth, writeLimiter, (req, res, next) =
 
     const parentTweet = db
       .prepare(
-        `SELECT id
+        `SELECT id, user_id
         FROM tweets t
         WHERE t.id = ?
           AND NOT EXISTS (
@@ -223,6 +229,7 @@ router.post('/tweets/:id/replies', requireAuth, writeLimiter, (req, res, next) =
       req.session.userId,
       content
     );
+    createReplyNotification(parentTweet.user_id, req.session.userId, tweetId);
 
     return res.redirect(`/tweets/${tweetId}`);
   } catch (err) {

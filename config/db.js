@@ -71,11 +71,35 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_tweet_media_tweet_id ON tweet_media(tweet_id);
   CREATE INDEX IF NOT EXISTS idx_tweet_media_expires_at ON tweet_media(expires_at);
 
+  CREATE TABLE IF NOT EXISTS notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    actor_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    tweet_id INTEGER NOT NULL REFERENCES tweets(id) ON DELETE CASCADE,
+    type TEXT NOT NULL CHECK(type IN ('followed_post', 'reply_to_you')),
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    read_at TEXT
+  );
+  CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+  CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications(created_at DESC);
+  CREATE INDEX IF NOT EXISTS idx_notifications_unread ON notifications(user_id, read_at);
+
   CREATE TABLE IF NOT EXISTS sessions (
     sid TEXT PRIMARY KEY,
     sess TEXT NOT NULL,
     expired INTEGER NOT NULL
   );
 `);
+
+function ensureColumnExists(tableName, columnName, definitionSql) {
+  const columns = db.prepare(`PRAGMA table_info(${tableName})`).all();
+  const hasColumn = columns.some((column) => column.name === columnName);
+  if (!hasColumn) {
+    db.exec(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definitionSql}`);
+  }
+}
+
+ensureColumnExists('follows', 'notify_posts', 'INTEGER NOT NULL DEFAULT 0');
+ensureColumnExists('follows', 'notify_replies', 'INTEGER NOT NULL DEFAULT 0');
 
 module.exports = db;

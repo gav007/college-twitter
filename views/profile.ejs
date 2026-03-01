@@ -1,28 +1,106 @@
 <%- include('layout/header', { title: profileUser.display_name }) %>
 <%- include('layout/nav') %>
 
-<main class="container page-container">
-  <section class="panel profile-header">
-    <h1><%= profileUser.display_name %></h1>
-    <p class="tweet-username">@<%= profileUser.username %></p>
+<main class="container page-container profile-page">
+  <section class="panel profile-shell">
+    <div class="profile-banner"></div>
+    <div class="profile-avatar"><%= (profileUser.display_name || profileUser.username).slice(0, 1).toUpperCase() %></div>
+
+    <div class="profile-headline">
+      <h1><%= profileUser.display_name %></h1>
+      <p class="tweet-username">@<%= profileUser.username %></p>
+      <p class="profile-joined">Joined <%= joinedDate %></p>
+    </div>
+
     <% if (profileUser.bio) { %>
-      <p><%= profileUser.bio %></p>
+      <p class="profile-bio"><%= profileUser.bio %></p>
     <% } %>
 
-    <p class="profile-counts">
-      <strong><%= followerCount %></strong> followers ·
-      <strong><%= followingCount %></strong> following
-    </p>
+    <div class="profile-metrics">
+      <article class="profile-metric-card">
+        <span class="metric-value"><%= tweetCount %></span>
+        <span class="metric-label">Posts</span>
+      </article>
+      <article class="profile-metric-card">
+        <span class="metric-value"><%= followerCount %></span>
+        <span class="metric-label">Followers</span>
+      </article>
+      <article class="profile-metric-card">
+        <span class="metric-value"><%= followingCount %></span>
+        <span class="metric-label">Following</span>
+      </article>
+    </div>
 
     <% if (currentUser && currentUser.id !== profileUser.id) { %>
-      <form method="POST" action="/users/<%= profileUser.username %>/follow">
-        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-        <button type="submit" class="btn-primary"><%= isFollowing ? 'Unfollow' : 'Follow' %></button>
-      </form>
+      <div class="profile-actions">
+        <form method="POST" action="/users/<%= profileUser.username %>/follow">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="btn-primary"><%= isFollowing ? 'Unfollow' : 'Follow' %></button>
+        </form>
+
+        <% if (isFollowing) { %>
+          <form method="POST" action="/users/<%= profileUser.username %>/notify">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="btn-secondary">
+              Notify Posts: <%= notifyPostsEnabled ? 'On' : 'Off' %>
+            </button>
+          </form>
+        <% } %>
+      </div>
+    <% } %>
+
+    <% if (currentUser && currentUser.id === profileUser.id) { %>
+      <section class="profile-edit-panel">
+        <h2>Edit Profile</h2>
+        <p class="muted">Update how your profile appears. Changing username updates your profile URL.</p>
+
+        <% if (profileUpdated) { %>
+          <p class="form-success">Profile updated.</p>
+        <% } %>
+        <% if (profileError) { %>
+          <p class="form-error"><%= profileError %></p>
+        <% } %>
+
+        <form method="POST" action="/settings/profile" class="auth-form">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+          <label for="profile-username">Username</label>
+          <input
+            id="profile-username"
+            name="username"
+            type="text"
+            maxlength="20"
+            required
+            value="<%= editForm.username %>"
+          >
+
+          <label for="profile-display-name">Display Name</label>
+          <input
+            id="profile-display-name"
+            name="display_name"
+            type="text"
+            maxlength="50"
+            required
+            value="<%= editForm.display_name %>"
+          >
+
+          <label for="profile-bio">Bio</label>
+          <textarea
+            id="profile-bio"
+            name="bio"
+            rows="3"
+            maxlength="160"
+            placeholder="Write a short bio"
+          ><%= editForm.bio %></textarea>
+
+          <button type="submit" class="btn-primary">Save Profile</button>
+        </form>
+      </section>
     <% } %>
   </section>
 
-  <section>
+  <section class="profile-posts">
+    <h2>Posts</h2>
     <% if (!tweets.length) { %>
       <p class="muted">No tweets yet.</p>
     <% } %>

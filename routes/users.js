@@ -5,6 +5,9 @@ const requireAuth = require('../middleware/requireAuth');
 const { writeLimiter } = require('../middleware/rateLimit');
 
 const router = express.Router();
+const USERNAME_REGEX = /^[A-Za-z0-9_]{3,20}$/;
+const DISPLAY_NAME_MAX_LENGTH = 50;
+const BIO_MAX_LENGTH = 160;
 
 router.get('/users/:username', (req, res, next) => {
   try {
@@ -18,10 +21,16 @@ router.get('/users/:username', (req, res, next) => {
     if (!profileUser) {
       return res.status(404).render('error', { status: 404, message: 'User not found' });
     }
+    const joinedDate = new Date(`${profileUser.created_at}Z`).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
 
     const counts = db
       .prepare(
         `SELECT
+          (SELECT COUNT(*) FROM tweets WHERE user_id = u.id) AS tweet_count,
           (SELECT COUNT(*) FROM follows WHERE following_id = u.id) AS follower_count,
           (SELECT COUNT(*) FROM follows WHERE follower_id = u.id) AS following_count
         FROM users u
@@ -30,11 +39,13 @@ router.get('/users/:username', (req, res, next) => {
       .get(profileUser.id);
 
     let isFollowing = false;
+    let notifyPostsEnabled = false;
     if (req.session.userId && req.session.userId !== profileUser.id) {
       const followRow = db
-        .prepare('SELECT 1 FROM follows WHERE follower_id = ? AND following_id = ?')
+        .prepare('SELECT notify_posts FROM follows WHERE follower_id = ? AND following_id = ?')
         .get(req.session.userId, profileUser.id);
       isFollowing = !!followRow;
+      notifyPostsEnabled = !!(followRow && followRow.notify_posts);
     }
 
     const tweets = db
@@ -72,6 +83,16 @@ router.get('/users/:username', (req, res, next) => {
       profileUser,
       tweets,
       isFollowing,
+      notifyPostsEnabled,
+      profileError: req.query.error || null,
+      profileUpdated: req.query.updated === '1',
+      editForm: {
+        username: profileUser.username,
+        display_name: profileUser.display_name,
+        bio: profileUser.bio || ''
+      },
+      joinedDate,
+      tweetCount: counts.tweet_count,
       followerCount: counts.follower_count,
       followingCount: counts.following_count
     });
@@ -111,6 +132,112 @@ router.post('/users/:username/follow', requireAuth, writeLimiter, (req, res, nex
 
     const backUrl = req.get('referer') || `/users/${targetUser.username}`;
     return res.redirect(backUrl);
+  } catch (err) {
+    return next(err);
+  }
+});
+
+router.post('/users/:username/notify', requireAuth, writeLimiter, (req, res, next) => {
+  try {
+    const username = (req.params.username || '').trim();
+    const targetUser = db.prepare('SELECT id, username FROM users WHERE username = ?').get(username);
+
+    if (!targetUser) {
+      return res.status(404).render('error', { status: 404, message: 'User not found' });
+    }
+
+    if (targetUser.id === req.session.userId) {
+      return res.status(400).render('error', { status: 400, message: 'Invalid notification target' });
+    }
+
+    const followRow = db
+      .prepare('SELECT notify_posts FROM follows WHERE follower_id = ? AND following_id = ?')
+      .get(req.session.userId, targetUser.id);
+
+    if (!followRow) {
+      return res.status(400).render('error', {
+        status: 400,
+        message: 'You can only toggle notifications for users you follow.'
+      });
+    }
+
+    const nextValue = followRow.notify_posts ? 0 : 1;
+    db.prepare('UPDATE follows SET notify_posts = ? WHERE follower_id = ? AND following_id = ?').run(
+      nextValue,
+      req.session.userId,
+      targetUser.id
+    );
+
+    const backUrl = req.get('referer') || `/users/${targetUser.username}`;
+    return res.redirect(backUrl);
+  } catch (err) {
+    return next(err);
+  }
+});
+
+router.post('/settings/profile', requireAuth, writeLimiter, (req, res, next) => {
+  try {
+    const userId = req.session.userId;
+    const currentUser = db
+      .prepare('SELECT id, username FROM users WHERE id = ?')
+      .get(userId);
+
+    if (!currentUser) {
+      return res.status(404).render('error', { status: 404, message: 'User not found' });
+    }
+
+    const username = (req.body.username || '').trim();
+    const displayName = (req.body.display_name || '').trim();
+    const bio = (req.body.bio || '').trim();
+
+    if (!USERNAME_REGEX.test(username)) {
+      return res.redirect(
+        `/users/${currentUser.username}?error=${encodeURIComponent(
+          'Username must be 3-20 characters using letters, numbers, or underscores.'
+        )}`
+      );
+    }
+
+    if (!displayName) {
+      return res.redirect(
+        `/users/${currentUser.username}?error=${encodeURIComponent('Display name is required.')}`
+      );
+    }
+
+    if (displayName.length > DISPLAY_NAME_MAX_LENGTH) {
+      return res.redirect(
+        `/users/${currentUser.username}?error=${encodeURIComponent(
+          `Display name must be ${DISPLAY_NAME_MAX_LENGTH} characters or fewer.`
+        )}`
+      );
+    }
+
+    if (bio.length > BIO_MAX_LENGTH) {
+      return res.redirect(
+        `/users/${currentUser.username}?error=${encodeURIComponent(
+          `Bio must be ${BIO_MAX_LENGTH} characters or fewer.`
+        )}`
+      );
+    }
+
+    const existingUser = db
+      .prepare('SELECT id FROM users WHERE username = ? AND id != ?')
+      .get(username, userId);
+
+    if (existingUser) {
+      return res.redirect(
+        `/users/${currentUser.username}?error=${encodeURIComponent('Username is already taken.')}`
+      );
+    }
+
+    db.prepare('UPDATE users SET username = ?, display_name = ?, bio = ? WHERE id = ?').run(
+      username,
+      displayName,
+      bio,
+      userId
+    );
+
+    return res.redirect(`/users/${username}?updated=1`);
   } catch (err) {
     return next(err);
   }

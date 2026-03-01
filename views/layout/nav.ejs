@@ -4,7 +4,9 @@
     <a href="/" class="nav-logo">Loopfeed</a>
 
     <div class="nav-actions-right">
+      <a href="/explore" class="nav-link nav-priority-link">Explore</a>
       <% if (currentUser) { %>
+        <a href="/notifications" class="nav-link nav-priority-link">Notifications</a>
         <button
           class="btn-post-global"
           onclick="document.getElementById('global-compose-modal').showModal()"
@@ -13,12 +15,10 @@
         >
           <span aria-hidden="true">✦ Post</span>
         </button>
-      <% } %>
-
-      <% if (currentUser && unreadCount > 0) { %>
-        <a href="/notifications" class="nav-notif-badge" aria-label="<%= unreadCount %> unread notifications">
-          <span class="badge"><%= unreadCount %></span>
-        </a>
+      <% } else { %>
+        <button type="button" id="theme-toggle" class="nav-link nav-toggle-theme nav-priority-link">Theme</button>
+        <a href="/login" class="nav-link nav-priority-link">Login</a>
+        <a href="/register" class="nav-link nav-priority-link">Register</a>
       <% } %>
 
       <button
@@ -34,23 +34,16 @@
   </div>
 
   <ul class="nav-menu" id="nav-menu" role="list">
-    <li><a href="/" class="nav-link">Home</a></li>
-    <li><a href="/explore" class="nav-link">Explore</a></li>
-    <li>
-      <button type="button" id="theme-toggle" class="nav-link nav-toggle-theme">Theme</button>
-    </li>
     <% if (currentUser) { %>
+      <li><a href="/" class="nav-link">Home</a></li>
       <li><a href="/users/<%= currentUser.username %>" class="nav-link">Profile</a></li>
-      <li><a href="/notifications" class="nav-link">Notifications</a></li>
+      <li><button type="button" id="theme-toggle" class="nav-link nav-toggle-theme">Theme</button></li>
       <li>
         <form method="POST" action="/logout">
           <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <button type="submit" class="nav-link nav-logout">Logout</button>
         </form>
       </li>
-    <% } else { %>
-      <li><a href="/login" class="nav-link">Login</a></li>
-      <li><a href="/register" class="nav-link">Register</a></li>
     <% } %>
   </ul>
 </nav>

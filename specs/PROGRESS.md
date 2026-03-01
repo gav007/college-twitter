@@ -87,6 +87,13 @@ This file tracks what has been built. Update checkboxes as you complete each ite
 - [x] Upload CSRF and write-rate-limit protections verified.
 - [x] E2E tests added for valid/invalid/oversize/CSRF/rate-limit upload flows.
 
+## Phase 13: Notifications MVP
+- [x] Notifications table and follow notify preference columns added.
+- [x] Followed-post notifications (opt-in) and reply-to-you notifications implemented.
+- [x] Profile-level per-follow notify toggle implemented.
+- [x] Notifications page with unread badge and read/read-all controls implemented.
+- [x] Playwright tests for notifications flows pass.
+
 ---
 
 ## Required npm Dependencies
@@ -312,4 +319,33 @@ Running 9 tests using 1 worker
   ✓ upload spam hits rate limit
   ✓ theme toggle persists after refresh
 9 passed (12.7s)
+```
+
+## Phase 13 Verification Outputs (March 1, 2026)
+
+```text
+$ DB_PATH=/tmp/phase13-migration.db node (schema check)
+index:idx_notifications_created_at
+index:idx_notifications_unread
+index:idx_notifications_user_id
+table:notifications
+FOLLOWS_HAS_NOTIFY_POSTS=true
+FOLLOWS_HAS_NOTIFY_REPLIES=true
+```
+
+```text
+$ npm run test:e2e
+Running 11 tests using 1 worker
+  ✓ followed-post notifications respect notify toggle
+  ✓ reply notifications appear for tweet owner
+  ✓ register -> login -> create tweet
+  ✓ thread reply flow increments reply count
+  ✓ follow user then verify feed and explore regression
+  ✓ valid image upload succeeds and renders in tweet card
+  ✓ invalid upload type is rejected
+  ✓ oversized upload is rejected
+  ✓ upload post without CSRF token is blocked
+  ✓ upload spam hits rate limit
+  ✓ theme toggle persists after refresh
+11 passed (16.2s)
 ```
