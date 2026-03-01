@@ -88,3 +88,28 @@ Generate a secret:
 - `git pull`
 - `npm install` (only if dependencies changed)
 - `pm2 restart college-twitter`
+
+## Backups
+
+- Backup script:
+  - `/home/ec2-user/projects/college-twitter/scripts/backup_sqlite.sh`
+- Manual backup run:
+  - `DB_PATH=/home/ec2-user/data/college-twitter.db /home/ec2-user/projects/college-twitter/scripts/backup_sqlite.sh`
+- Backup location:
+  - `/home/ec2-user/data/backups`
+- Retention:
+  - Keeps latest 7 backup files.
+- Schedule (daily at 03:00):
+  - `0 3 * * * DB_PATH=/home/ec2-user/data/college-twitter.db /home/ec2-user/projects/college-twitter/scripts/backup_sqlite.sh >> /home/ec2-user/data/backups/backup.log 2>&1`
+
+## Restore Drill
+
+1. Pick latest backup:
+   - `LATEST=$(ls -1t /home/ec2-user/data/backups/college-twitter-*.db | head -1)`
+2. Restore to test file:
+   - `cp "$LATEST" /tmp/college-twitter-restore.db`
+3. Verify schema and rows:
+   - `sqlite3 /tmp/college-twitter-restore.db ".tables"`
+   - `sqlite3 /tmp/college-twitter-restore.db "SELECT COUNT(*) FROM users;"`
+4. Verify app boot against restored DB:
+   - `DB_PATH=/tmp/college-twitter-restore.db NODE_ENV=production node -e "require('./config/db'); console.log('restore-db-ok')"`

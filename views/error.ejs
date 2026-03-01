@@ -1,0 +1,13 @@
+<%- include('layout/header', { title: 'Error' }) %>
+<%- include('layout/nav') %>
+
+<main class="container page-container">
+  <section class="panel">
+    <h1>Error <%= status || 500 %></h1>
+    <p><%= message || 'Something went wrong' %></p>
+    <a href="/">Back home</a>
+  </section>
+</main>
+
+</body>
+</html>

@@ -1,0 +1,40 @@
+<%- include('layout/header', { title: 'Explore' }) %>
+<%- include('layout/nav') %>
+
+<main class="container page-container">
+  <section class="panel">
+    <form method="GET" action="/search" class="search-form">
+      <label for="search-q">Search usernames</label>
+      <input id="search-q" name="q" type="text" value="<%= query %>" placeholder="Search @username">
+      <button type="submit" class="btn-primary">Search</button>
+    </form>
+
+    <% if (query) { %>
+      <h2>Search results for "<%= query %>"</h2>
+      <% if (!searchResults.length) { %>
+        <p class="muted">No matching users.</p>
+      <% } %>
+      <% searchResults.forEach((user) => { %>
+        <p>
+          <a href="/users/<%= user.username %>"><%= user.display_name %> (@<%= user.username %>)</a>
+          · <%= user.tweet_count %> tweets
+        </p>
+      <% }) %>
+    <% } %>
+  </section>
+
+  <section>
+    <h2>Recent tweets</h2>
+    <% if (!tweets.length) { %>
+      <p class="muted">No tweets yet.</p>
+    <% } %>
+
+    <% tweets.forEach((tweet) => { %>
+      <%- include('partials/tweet-card', { tweet: tweet }) %>
+    <% }) %>
+  </section>
+</main>
+
+<script src="/public/js/app.js"></script>
+</body>
+</html>

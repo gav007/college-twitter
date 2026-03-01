@@ -1,0 +1,38 @@
+<%- include('layout/header', { title: profileUser.display_name }) %>
+<%- include('layout/nav') %>
+
+<main class="container page-container">
+  <section class="panel profile-header">
+    <h1><%= profileUser.display_name %></h1>
+    <p class="tweet-username">@<%= profileUser.username %></p>
+    <% if (profileUser.bio) { %>
+      <p><%= profileUser.bio %></p>
+    <% } %>
+
+    <p class="profile-counts">
+      <strong><%= followerCount %></strong> followers ·
+      <strong><%= followingCount %></strong> following
+    </p>
+
+    <% if (currentUser && currentUser.id !== profileUser.id) { %>
+      <form method="POST" action="/users/<%= profileUser.username %>/follow">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button type="submit" class="btn-primary"><%= isFollowing ? 'Unfollow' : 'Follow' %></button>
+      </form>
+    <% } %>
+  </section>
+
+  <section>
+    <% if (!tweets.length) { %>
+      <p class="muted">No tweets yet.</p>
+    <% } %>
+
+    <% tweets.forEach((tweet) => { %>
+      <%- include('partials/tweet-card', { tweet: tweet }) %>
+    <% }) %>
+  </section>
+</main>
+
+<script src="/public/js/app.js"></script>
+</body>
+</html>

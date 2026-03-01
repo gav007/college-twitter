@@ -1,0 +1,257 @@
+:root {
+  --bg: #f5f8fa;
+  --card: #ffffff;
+  --text: #0f1419;
+  --muted: #536471;
+  --border: #e5e9ec;
+  --primary: #1d9bf0;
+  --primary-hover: #1a8cd8;
+  --danger: #d63e66;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+}
+
+a {
+  color: var(--primary);
+}
+
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.page-container {
+  padding-top: 16px;
+  padding-bottom: 24px;
+}
+
+.nav {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.nav-inner {
+  min-height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand {
+  color: var(--text);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: var(--text);
+}
+
+.nav-links a:hover {
+  color: var(--primary);
+}
+
+.inline-form {
+  margin: 0;
+}
+
+.link-btn {
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  cursor: pointer;
+  padding: 0;
+}
+
+.auth-container {
+  min-height: calc(100vh - 72px);
+  display: grid;
+  place-items: center;
+}
+
+.auth-card,
+.panel,
+.compose-box,
+.tweet-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.auth-card,
+.panel,
+.compose-box {
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.auth-form {
+  display: grid;
+  gap: 10px;
+}
+
+.auth-form input,
+.search-form input,
+.tweet-textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+}
+
+.tweet-textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.btn-primary {
+  border: 0;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 999px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 8px 16px;
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+}
+
+.compose-footer {
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.char-counter {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.char-counter.danger {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.form-error {
+  background: #ffe4ec;
+  color: #9f1239;
+  border: 1px solid #fecdd9;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.tweet-card {
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.tweet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.tweet-author {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.tweet-author:hover {
+  text-decoration: underline;
+}
+
+.tweet-username,
+.tweet-time,
+.muted {
+  color: var(--muted);
+}
+
+.tweet-content {
+  margin: 10px 0 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.tweet-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.like-btn,
+.delete-btn {
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+  padding: 4px 10px;
+}
+
+.like-btn:hover,
+.delete-btn:hover {
+  border-color: #c8d0d6;
+}
+
+.like-btn.liked {
+  color: var(--danger);
+  border-color: #f4b3c5;
+  background: #fff4f7;
+}
+
+.delete-btn {
+  color: #a61b1b;
+}
+
+.profile-header h1,
+.profile-header p {
+  margin: 0 0 8px;
+}
+
+.profile-counts {
+  margin-top: 8px;
+}
+
+.search-form {
+  display: grid;
+  gap: 10px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

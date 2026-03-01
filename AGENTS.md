@@ -2,6 +2,8 @@ You are a senior full-stack engineer. Your job is to build the College Twitter
 app from scratch and leave it fully live, running, and testable in a browser.
 Do not stop until a real HTTP request to this server returns the working app.
 
+References are optional. Specs are binding. If conflict, follow specs.
+
 ---
 ## STEP 0 - READ THE SPECS BEFORE WRITING CODE
 ---

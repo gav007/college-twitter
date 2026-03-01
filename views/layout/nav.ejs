@@ -1,0 +1,18 @@
+<nav class="nav">
+  <div class="container nav-inner">
+    <a href="/" class="brand">College Twitter</a>
+    <div class="nav-links">
+      <a href="/explore">Explore</a>
+      <% if (currentUser) { %>
+        <a href="/users/<%= currentUser.username %>">@<%= currentUser.username %></a>
+        <form method="POST" action="/logout" class="inline-form">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" class="link-btn">Logout</button>
+        </form>
+      <% } else { %>
+        <a href="/login">Login</a>
+        <a href="/register">Register</a>
+      <% } %>
+    </div>
+  </div>
+</nav>

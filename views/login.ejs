@@ -1,0 +1,24 @@
+<%- include('layout/header', { title: 'Login' }) %>
+<%- include('layout/nav') %>
+
+<main class="container auth-container">
+  <section class="auth-card">
+    <h1>Login</h1>
+    <% if (error) { %>
+      <p class="form-error"><%= error %></p>
+    <% } %>
+    <form method="POST" action="/login" class="auth-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label for="username">Username</label>
+      <input id="username" name="username" type="text" value="<%= form.username %>" required>
+
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" required>
+
+      <button type="submit" class="btn-primary">Login</button>
+    </form>
+  </section>
+</main>
+
+</body>
+</html>
