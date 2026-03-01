@@ -62,6 +62,12 @@ This file tracks what has been built. Update checkboxes as you complete each ite
 - [x] Reply count visible on tweet card.
 - [x] All Phase 6 protections apply on reply endpoint.
 
+## Phase 8: Automated Tests and CI
+- [x] Static asset caching set to short-cache for active development.
+- [x] Playwright E2E suite added for core register/login/post, reply, and follow/feed/explore flows.
+- [x] GitHub Actions workflow added for push/PR E2E execution.
+- [ ] CI run on GitHub validated green at least once.
+
 ---
 
 ## Required npm Dependencies
@@ -198,4 +204,31 @@ REG_LIKE_STATUS=200
 REG_LIKE_PAYLOAD={"liked":true,"like_count":1}
 REG_EXPLORE_STATUS=200
 REG_EXPLORE_HAS_TWEET=true
+```
+
+## Phase 8 Verification Outputs (March 1, 2026)
+
+```text
+$ sudo nginx -t && sudo systemctl reload nginx
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+NGINX_RELOADED
+```
+
+```text
+$ curl -sI https://loopfeed.duckdns.org/public/css/main.css | rg -i "cache-control|expires|etag|last-modified"
+Last-Modified: Sun, 01 Mar 2026 12:43:58 GMT
+ETag: "69a4348e-f9d"
+Expires: Sun, 01 Mar 2026 13:13:02 GMT
+Cache-Control: max-age=300
+Cache-Control: public
+```
+
+```text
+$ npm run test:e2e
+Running 3 tests using 1 worker
+  ✓ register -> login -> create tweet
+  ✓ thread reply flow increments reply count
+  ✓ follow user then verify feed and explore regression
+3 passed (8.7s)
 ```

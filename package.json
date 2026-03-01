@@ -5,7 +5,9 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
@@ -20,5 +22,8 @@
     "connect-better-sqlite3": {
       "better-sqlite3": "^9.4.3"
     }
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.2"
   }
 }
