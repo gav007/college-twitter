@@ -99,6 +99,8 @@ Generate a secret:
   - `/home/ec2-user/data/backups`
 - Retention:
   - Keeps latest 7 backup files.
+- Uploads:
+  - `/home/ec2-user/data/uploads` is intentionally excluded from backup scope (ephemeral media).
 - Schedule (daily at 03:00):
   - `0 3 * * * DB_PATH=/home/ec2-user/data/college-twitter.db /home/ec2-user/projects/college-twitter/scripts/backup_sqlite.sh >> /home/ec2-user/data/backups/backup.log 2>&1`
 

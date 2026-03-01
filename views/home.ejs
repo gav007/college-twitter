@@ -8,10 +8,18 @@
 
   <% if (currentUser) { %>
     <section class="compose-box">
-      <form method="POST" action="/tweets">
+      <form method="POST" action="/tweets" enctype="multipart/form-data">
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
         <label for="tweet-content" class="sr-only">What is happening?</label>
         <textarea id="tweet-content" name="content" class="tweet-textarea" maxlength="280" required placeholder="What is happening?"></textarea>
+        <label for="tweet-image" class="media-label">Attach image (optional)</label>
+        <input
+          id="tweet-image"
+          name="image"
+          type="file"
+          accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+          class="media-input"
+        >
         <div class="compose-footer">
           <span class="char-counter">280</span>
           <button type="submit" class="btn-primary">Post</button>

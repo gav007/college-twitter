@@ -78,6 +78,15 @@ This file tracks what has been built. Update checkboxes as you complete each ite
 - [x] Manual theme toggle added with `localStorage` persistence.
 - [x] Playwright test verifies theme persistence after refresh.
 
+## Phase 12a: Ephemeral Media Uploads
+- [x] Images-only upload (jpg/jpeg/png/webp) implemented with 5 MB limit.
+- [x] Upload security checks enabled (extension, MIME, magic bytes).
+- [x] Media metadata stored in SQLite (`tweet_media`) and files stored in `/home/ec2-user/data/uploads/`.
+- [x] TTL expiration set to 1 hour with cleanup every 5 minutes.
+- [x] Expiration behavior deletes tweet + media metadata + media file.
+- [x] Upload CSRF and write-rate-limit protections verified.
+- [x] E2E tests added for valid/invalid/oversize/CSRF/rate-limit upload flows.
+
 ---
 
 ## Required npm Dependencies
@@ -271,4 +280,36 @@ Running 4 tests using 1 worker
   ✓ follow user then verify feed and explore regression
   ✓ theme toggle persists after refresh
 4 passed (8.8s)
+```
+
+## Phase 12 Verification Outputs (March 1, 2026)
+
+```text
+$ DB_PATH=/tmp/phase12-migration.db node (sqlite_master check)
+index:idx_tweet_media_expires_at
+index:idx_tweet_media_tweet_id
+table:tweet_media
+```
+
+```text
+$ DB_PATH=/tmp/phase12-expiry.db UPLOAD_DIR=/tmp/phase12-expiry-uploads node (expiration cleanup drill)
+CLEANUP_DELETED=1
+TWEET_EXISTS_AFTER_CLEANUP=0
+MEDIA_EXISTS_AFTER_CLEANUP=0
+FILE_EXISTS_AFTER_CLEANUP=false
+```
+
+```text
+$ npm run test:e2e
+Running 9 tests using 1 worker
+  ✓ register -> login -> create tweet
+  ✓ thread reply flow increments reply count
+  ✓ follow user then verify feed and explore regression
+  ✓ valid image upload succeeds and renders in tweet card
+  ✓ invalid upload type is rejected
+  ✓ oversized upload is rejected
+  ✓ upload post without CSRF token is blocked
+  ✓ upload spam hits rate limit
+  ✓ theme toggle persists after refresh
+9 passed (12.7s)
 ```

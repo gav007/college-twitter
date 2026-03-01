@@ -16,7 +16,7 @@ module.exports = defineConfig({
   },
   webServer: {
     command:
-      "bash -lc 'rm -f /tmp/college-twitter-e2e.db /tmp/college-twitter-e2e.db-shm /tmp/college-twitter-e2e.db-wal && DB_PATH=/tmp/college-twitter-e2e.db PORT=4173 SESSION_SECRET=e2e-secret NODE_ENV=test node server.js'",
+      "bash -lc 'rm -f /tmp/college-twitter-e2e.db /tmp/college-twitter-e2e.db-shm /tmp/college-twitter-e2e.db-wal && rm -rf /tmp/college-twitter-e2e-uploads && DB_PATH=/tmp/college-twitter-e2e.db UPLOAD_DIR=/tmp/college-twitter-e2e-uploads PORT=4173 SESSION_SECRET=e2e-secret NODE_ENV=test node server.js'",
     url: 'http://127.0.0.1:4173/login',
     reuseExistingServer: !process.env.CI,
     timeout: 120_000

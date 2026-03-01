@@ -8,6 +8,14 @@
   </div>
 
   <p class="tweet-content"><%= tweet.content %></p>
+  <% if (tweet.media_id) { %>
+    <img
+      src="/media/<%= tweet.media_id %>"
+      alt="Tweet media"
+      class="tweet-image"
+      loading="lazy"
+    >
+  <% } %>
 
   <div class="tweet-actions">
     <% if (currentUser) { %>

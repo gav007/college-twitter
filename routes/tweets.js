@@ -1,10 +1,72 @@
 const express = require('express');
+const fs = require('fs');
 
 const db = require('../config/db');
 const requireAuth = require('../middleware/requireAuth');
 const { writeLimiter } = require('../middleware/rateLimit');
+const {
+  buildStoredImagePath,
+  deleteFileSafe,
+  deleteTweetAndMedia,
+  validateUploadedImage
+} = require('../services/tweetMedia');
 
 const router = express.Router();
+
+const insertTweetStmt = db.prepare('INSERT INTO tweets (user_id, content) VALUES (?, ?)');
+const insertTweetMediaStmt = db.prepare(
+  "INSERT INTO tweet_media (tweet_id, file_path, mime_type, size_bytes, expires_at) VALUES (?, ?, ?, ?, datetime('now', '+1 hour'))"
+);
+const createTweetWithOptionalMedia = db.transaction((payload) => {
+  const tweetResult = insertTweetStmt.run(payload.userId, payload.content);
+  const tweetId = Number(tweetResult.lastInsertRowid);
+
+  if (payload.media) {
+    insertTweetMediaStmt.run(tweetId, payload.media.filePath, payload.media.mimeType, payload.media.sizeBytes);
+  }
+});
+
+router.get('/media/:id', (req, res, next) => {
+  try {
+    const mediaId = Number(req.params.id);
+    if (!Number.isInteger(mediaId)) {
+      return res.status(400).render('error', { status: 400, message: 'Invalid media id' });
+    }
+
+    const media = db
+      .prepare(
+        `SELECT
+          tm.id,
+          tm.tweet_id,
+          tm.file_path,
+          tm.mime_type,
+          CASE WHEN tm.expires_at <= datetime('now') THEN 1 ELSE 0 END AS is_expired
+        FROM tweet_media tm
+        WHERE tm.id = ?`
+      )
+      .get(mediaId);
+
+    if (!media) {
+      return res.status(404).render('error', { status: 404, message: 'Media not found' });
+    }
+
+    if (media.is_expired) {
+      deleteTweetAndMedia(media.tweet_id);
+      return res.status(404).render('error', { status: 404, message: 'Media has expired' });
+    }
+
+    if (!fs.existsSync(media.file_path)) {
+      deleteTweetAndMedia(media.tweet_id);
+      return res.status(404).render('error', { status: 404, message: 'Media not found' });
+    }
+
+    res.set('Cache-Control', 'no-store');
+    res.type(media.mime_type);
+    return res.sendFile(media.file_path);
+  } catch (err) {
+    return next(err);
+  }
+});
 
 router.get('/tweets/:id', (req, res, next) => {
   try {
@@ -25,12 +87,20 @@ router.get('/tweets/:id', (req, res, next) => {
           u.display_name,
           COUNT(DISTINCT l.user_id) AS like_count,
           COUNT(DISTINCT r.id) AS reply_count,
+          MAX(tm.id) AS media_id,
           MAX(CASE WHEN l.user_id = ? THEN 1 ELSE 0 END) AS liked_by_me
         FROM tweets t
         JOIN users u ON u.id = t.user_id
         LEFT JOIN likes l ON l.tweet_id = t.id
         LEFT JOIN replies r ON r.tweet_id = t.id
+        LEFT JOIN tweet_media tm ON tm.tweet_id = t.id
         WHERE t.id = ?
+          AND NOT EXISTS (
+            SELECT 1
+            FROM tweet_media em
+            WHERE em.tweet_id = t.id
+              AND em.expires_at <= datetime('now')
+          )
         GROUP BY t.id`
       )
       .get(currentUserId, tweetId);
@@ -79,7 +149,36 @@ router.post('/tweets', requireAuth, writeLimiter, (req, res, next) => {
       return res.redirect('/?error=Tweet%20cannot%20exceed%20280%20characters');
     }
 
-    db.prepare('INSERT INTO tweets (user_id, content) VALUES (?, ?)').run(req.session.userId, content);
+    let media = null;
+    if (req.file) {
+      const validation = validateUploadedImage(req.file);
+      if (!validation.ok) {
+        return res.redirect(`/?error=${encodeURIComponent(validation.message)}`);
+      }
+
+      const filePath = buildStoredImagePath(validation.extension);
+      fs.writeFileSync(filePath, req.file.buffer, { flag: 'wx' });
+
+      media = {
+        filePath,
+        mimeType: validation.mimeType,
+        sizeBytes: req.file.size
+      };
+    }
+
+    try {
+      createTweetWithOptionalMedia({
+        userId: req.session.userId,
+        content,
+        media
+      });
+    } catch (err) {
+      if (media && media.filePath) {
+        deleteFileSafe(media.filePath);
+      }
+      throw err;
+    }
+
     return res.redirect('/');
   } catch (err) {
     return next(err);
@@ -93,7 +192,19 @@ router.post('/tweets/:id/replies', requireAuth, writeLimiter, (req, res, next) =
       return res.status(400).render('error', { status: 400, message: 'Invalid tweet id' });
     }
 
-    const parentTweet = db.prepare('SELECT id FROM tweets WHERE id = ?').get(tweetId);
+    const parentTweet = db
+      .prepare(
+        `SELECT id
+        FROM tweets t
+        WHERE t.id = ?
+          AND NOT EXISTS (
+            SELECT 1
+            FROM tweet_media em
+            WHERE em.tweet_id = t.id
+              AND em.expires_at <= datetime('now')
+          )`
+      )
+      .get(tweetId);
     if (!parentTweet) {
       return res.status(404).render('error', { status: 404, message: 'Tweet not found' });
     }
@@ -135,7 +246,7 @@ router.post('/tweets/:id/delete', requireAuth, writeLimiter, (req, res, next) =>
       return res.status(403).render('error', { status: 403, message: 'Forbidden' });
     }
 
-    db.prepare('DELETE FROM tweets WHERE id = ?').run(tweetId);
+    deleteTweetAndMedia(tweetId);
 
     const backUrl = req.get('referer') || '/';
     return res.redirect(backUrl);
@@ -151,7 +262,19 @@ router.post('/tweets/:id/like', requireAuth, writeLimiter, (req, res, next) => {
       return res.status(400).json({ liked: false, like_count: 0 });
     }
 
-    const tweet = db.prepare('SELECT id FROM tweets WHERE id = ?').get(tweetId);
+    const tweet = db
+      .prepare(
+        `SELECT id
+        FROM tweets t
+        WHERE t.id = ?
+          AND NOT EXISTS (
+            SELECT 1
+            FROM tweet_media em
+            WHERE em.tweet_id = t.id
+              AND em.expires_at <= datetime('now')
+          )`
+      )
+      .get(tweetId);
     if (!tweet) {
       return res.status(404).json({ liked: false, like_count: 0 });
     }

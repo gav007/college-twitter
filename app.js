@@ -8,6 +8,7 @@ const RawSQLiteStore = require('connect-better-sqlite3')(session);
 const db = require('./config/db');
 const csrf = require('./middleware/csrf');
 const currentUser = require('./middleware/currentUser');
+const tweetUploadParser = require('./middleware/tweetUploadParser');
 const authRoutes = require('./routes/auth');
 const feedRoutes = require('./routes/feed');
 const tweetRoutes = require('./routes/tweets');
@@ -135,6 +136,7 @@ app.use((req, res, next) => {
 });
 app.use(currentUser);
 app.use(csrf.ensureCsrfToken);
+app.use('/tweets', tweetUploadParser);
 app.use(csrf.verifyCsrfToken);
 app.use('/', authRoutes);
 app.use('/', feedRoutes);

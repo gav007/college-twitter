@@ -59,6 +59,18 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_replies_user_id ON replies(user_id);
   CREATE INDEX IF NOT EXISTS idx_replies_created_at ON replies(created_at DESC);
 
+  CREATE TABLE IF NOT EXISTS tweet_media (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    tweet_id INTEGER NOT NULL UNIQUE REFERENCES tweets(id) ON DELETE CASCADE,
+    file_path TEXT NOT NULL,
+    mime_type TEXT NOT NULL,
+    size_bytes INTEGER NOT NULL CHECK(size_bytes > 0),
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    expires_at TEXT NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_tweet_media_tweet_id ON tweet_media(tweet_id);
+  CREATE INDEX IF NOT EXISTS idx_tweet_media_expires_at ON tweet_media(expires_at);
+
   CREATE TABLE IF NOT EXISTS sessions (
     sid TEXT PRIMARY KEY,
     sess TEXT NOT NULL,
