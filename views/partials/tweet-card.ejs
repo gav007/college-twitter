@@ -1,16 +1,118 @@
-<article class="tweet-card" data-tweet-id="<%= tweet.id %>">
+<article class="tweet-card" data-tweet-id="<%= tweet.id %>" data-tweet-url="/tweets/<%= tweet.id %>">
+  <% const linkPreview = buildLinkPreviewFromText(tweet.content, tweet.link_image_url); %>
+  <% const showInlineCommentsPanel = typeof showInlineComments === 'boolean' ? showInlineComments : true; %>
+  <% const commentPreview = Array.isArray(tweet.comment_preview) ? tweet.comment_preview : []; %>
+  <% const totalCommentCount = Number(tweet.reply_count || 0); %>
+  <% const safeAuthorAvatar = safeImageUrl(tweet.avatar_url); %>
+  <% const safeQuotedImage = safeImageUrl(tweet.quoted_link_image_url); %>
+  <% const previewHref = linkPreview ? safeHttpUrl(linkPreview.href) : ''; %>
+  <% const previewImage = linkPreview ? safeImageUrl(linkPreview.imageUrl) : ''; %>
+  <% const rawContent = String(tweet.content || '').trim(); %>
+  <% const decodedBotContent = tweet.is_bot ? decodeExternalText(rawContent) : rawContent; %>
+  <% const strippedBotPrefix = decodedBotContent.replace(/^[^\w@#]+/u, '').trim(); %>
+  <% const displayContent = tweet.is_bot && strippedBotPrefix ? strippedBotPrefix : decodedBotContent; %>
+  <% const botCategoryMap = {
+    rte_news_bot: 'News',
+    irish_sport_bot: 'Sport',
+    ireland_updates_bot: 'Ireland',
+    tud_tech_ai_bot: 'Tech',
+    tud_edu_bot: 'Education',
+    tud_grangegorman_bot: 'TU News',
+    tud_events_bot: 'TU Events',
+    dublin_events_bot: 'Events',
+    ireland_weather_bot: 'Weather'
+  }; %>
+  <% const botCategory = tweet.is_bot ? (botCategoryMap[tweet.username] || 'Update') : ''; %>
+  <% const reactionCounts = {
+    like: Number(tweet.reaction_like_count || 0),
+    love: Number(tweet.reaction_love_count || 0),
+    haha: Number(tweet.reaction_haha_count || 0),
+    wow: Number(tweet.reaction_wow_count || 0),
+    sad: Number(tweet.reaction_sad_count || 0)
+  }; %>
+  <% const reactionEmojis = { like: '👍', love: '❤️', haha: '😂', wow: '😮', sad: '😢' }; %>
+  <% const topReactions = Object.keys(reactionCounts)
+    .map((kind) => ({ kind, count: reactionCounts[kind] }))
+    .filter((row) => row.count > 0)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 3); %>
+
   <div class="tweet-header">
     <a href="/users/<%= tweet.username %>" class="tweet-author">
-      <strong><%= tweet.display_name %></strong>
-      <% if (tweet.is_bot) { %>
-        <span class="bot-badge" aria-label="Automated account">Bot</span>
-      <% } %>
-      <span class="tweet-username">@<%= tweet.username %></span>
+      <span class="tweet-avatar-small" aria-hidden="true">
+        <% if (safeAuthorAvatar) { %>
+          <img src="<%= safeAuthorAvatar %>" alt="" class="tweet-avatar-image-small">
+        <% } else { %>
+          <span><%= (tweet.display_name || tweet.username).slice(0, 1).toUpperCase() %></span>
+        <% } %>
+      </span>
+      <span class="tweet-author-meta">
+        <strong><%= tweet.display_name %></strong>
+        <% if (tweet.is_bot) { %>
+          <span class="bot-topic-chip"><%= botCategory %></span>
+        <% } %>
+        <span class="tweet-username">@<%= tweet.username %></span>
+      </span>
     </a>
-    <time class="tweet-time"><%= formatTime(tweet.created_at) %></time>
+    <div class="tweet-header-right">
+      <time class="tweet-time"><%= formatTime(tweet.created_at) %></time>
+      <% if (currentUser && currentUser.id !== tweet.user_id) { %>
+        <form method="POST" action="/users/<%= tweet.username %>/follow" class="tweet-head-follow-form">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button
+            type="submit"
+            class="tweet-head-follow-btn <%= tweet.is_following_author ? 'following' : '' %> <%= (!tweet.is_following_author && tweet.author_is_private && tweet.has_pending_follow_request) ? 'requested' : '' %>"
+          >
+            <% if (tweet.is_following_author) { %>
+              Following
+            <% } else if (tweet.author_is_private) { %>
+              <%= tweet.has_pending_follow_request ? 'Requested' : 'Follow' %>
+            <% } else { %>
+              Follow
+            <% } %>
+          </button>
+        </form>
+      <% } %>
+    </div>
   </div>
 
-  <p class="tweet-content"><%= tweet.content %></p>
+  <p class="tweet-content tweet-content-clamped" data-expandable-content>
+    <% linkifyTextSegments(displayContent).forEach((segment) => { %>
+      <% if (segment.type === 'link') { %>
+        <% const safeSegmentHref = safeHttpUrl(segment.href); %>
+        <% const linkLabel = segment.display || segment.value; %>
+        <% if (safeSegmentHref) { %>
+          <a
+            href="<%= safeSegmentHref %>"
+            class="tweet-link tweet-link-chip <%= previewHref && safeSegmentHref === previewHref ? 'is-previewed' : '' %>"
+            target="_blank"
+            rel="noopener noreferrer nofollow"
+          ><%= linkLabel %></a>
+        <% } else { %>
+          <%= segment.value %>
+        <% } %>
+      <% } else { %>
+        <%= segment.value %>
+      <% } %>
+    <% }) %>
+  </p>
+  <button type="button" class="tweet-expand-btn" data-expand-toggle hidden>Show more</button>
+
+  <% if (tweet.quoted_tweet_id && tweet.quoted_content) { %>
+    <a href="/tweets/<%= tweet.quoted_tweet_id %>" class="quote-preview-card">
+      <div class="quote-preview-meta">
+        <strong><%= tweet.quoted_author_display_name || tweet.quoted_author_username || 'Quoted user' %></strong>
+        <% if (tweet.quoted_author_username) { %>
+          <span class="tweet-username">@<%= tweet.quoted_author_username %></span>
+        <% } %>
+      </div>
+      <p class="quote-preview-text"><%= tweet.quoted_content %></p>
+      <% if (safeQuotedImage) { %>
+        <img src="<%= safeQuotedImage %>" alt="Quoted preview" class="quote-preview-image" loading="lazy">
+      <% } %>
+    </a>
+  <% } %>
+
   <% if (tweet.media_id) { %>
     <div class="tweet-media">
       <img
@@ -24,26 +126,200 @@
       <span class="expiry-icon">⏱</span> Image disappears in ~1h
     </p>
   <% } %>
+  <% if (linkPreview && previewHref) { %>
+    <a href="<%= previewHref %>" class="link-preview-card" target="_blank" rel="noopener noreferrer nofollow">
+      <% if (!tweet.media_id && previewImage) { %>
+        <img
+          src="<%= previewImage %>"
+          alt="Article preview"
+          class="link-preview-image"
+          loading="lazy"
+          referrerpolicy="no-referrer"
+        >
+      <% } %>
+      <div class="link-preview-domain"><%= linkPreview.domain %></div>
+      <div class="link-preview-title"><%= linkPreview.title %></div>
+      <% if (linkPreview.description) { %>
+        <p class="link-preview-description"><%= linkPreview.description %></p>
+      <% } %>
+    </a>
+  <% } %>
+
+  <div
+    class="reaction-summary-row"
+    data-reaction-row
+    data-tweet-id="<%= tweet.id %>"
+    data-my-reaction="<%= tweet.my_reaction || '' %>"
+    data-can-react="<%= currentUser ? '1' : '0' %>"
+  >
+    <div class="reaction-top-chips" data-reaction-summary>
+      <% if (!topReactions.length) { %>
+        <span class="muted reaction-empty">No reactions yet</span>
+      <% } else { %>
+        <% topReactions.forEach((reaction) => { %>
+          <span class="reaction-chip"><%= reactionEmojis[reaction.kind] %> <%= formatCount(reaction.count) %></span>
+        <% }) %>
+      <% } %>
+    </div>
+    <button
+      type="button"
+      class="reaction-toggle-btn"
+      data-reaction-toggle
+      aria-haspopup="dialog"
+      aria-expanded="false"
+      aria-controls="reaction-picker-<%= tweet.id %>"
+      <%= currentUser ? '' : 'disabled' %>
+    >React</button>
+    <div
+      id="reaction-picker-<%= tweet.id %>"
+      class="reaction-popover"
+      data-reaction-popover
+      role="dialog"
+      aria-label="Choose reaction"
+      hidden
+    >
+      <div class="reaction-popover-grid" role="group" aria-label="Reactions">
+        <button type="button" class="reaction-btn" data-reaction-btn data-kind="like" <%= currentUser ? '' : 'disabled' %>>
+          👍 <span data-reaction-count="like"><%= formatCount(reactionCounts.like) %></span>
+        </button>
+        <button type="button" class="reaction-btn" data-reaction-btn data-kind="love" <%= currentUser ? '' : 'disabled' %>>
+          ❤️ <span data-reaction-count="love"><%= formatCount(reactionCounts.love) %></span>
+        </button>
+        <button type="button" class="reaction-btn" data-reaction-btn data-kind="haha" <%= currentUser ? '' : 'disabled' %>>
+          😂 <span data-reaction-count="haha"><%= formatCount(reactionCounts.haha) %></span>
+        </button>
+        <button type="button" class="reaction-btn" data-reaction-btn data-kind="wow" <%= currentUser ? '' : 'disabled' %>>
+          😮 <span data-reaction-count="wow"><%= formatCount(reactionCounts.wow) %></span>
+        </button>
+        <button type="button" class="reaction-btn" data-reaction-btn data-kind="sad" <%= currentUser ? '' : 'disabled' %>>
+          😢 <span data-reaction-count="sad"><%= formatCount(reactionCounts.sad) %></span>
+        </button>
+      </div>
+    </div>
+  </div>
 
   <div class="tweet-actions">
     <% if (currentUser) { %>
-      <button class="like-btn <%= tweet.liked_by_me ? 'liked' : '' %>" data-tweet-id="<%= tweet.id %>" type="button">
-        ♥ <span class="like-count"><%= tweet.like_count %></span>
+      <button class="like-btn action-btn <%= tweet.liked_by_me ? 'liked' : '' %>" data-tweet-id="<%= tweet.id %>" type="button">
+        Like <span class="like-count"><%= formatCount(tweet.like_count || 0) %></span>
       </button>
     <% } else { %>
-      <span class="like-count-static">♥ <%= tweet.like_count %></span>
+      <span class="like-count-static">♥ <%= formatCount(tweet.like_count || 0) %></span>
     <% } %>
 
-    <a href="/tweets/<%= tweet.id %>" class="reply-link">Reply</a>
-    <a href="/tweets/<%= tweet.id %>" class="reply-count-link">
-      Replies <span class="reply-count"><%= tweet.reply_count || 0 %></span>
+    <a href="/tweets/<%= tweet.id %>" class="comment-link action-btn">
+      Comments <span class="action-count-badge"><%= formatCount(totalCommentCount) %></span>
     </a>
+    <button type="button" class="action-btn share-btn" data-share-url="/tweets/<%= tweet.id %>">Share</button>
 
-    <% if (currentUser && currentUser.id === tweet.user_id) { %>
-      <form method="POST" action="/tweets/<%= tweet.id %>/delete" class="delete-form">
-        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-        <button type="submit" class="delete-btn">Delete</button>
-      </form>
-    <% } %>
+    <div class="tweet-more-menu" data-more-menu-root>
+      <button
+        type="button"
+        class="action-btn"
+        data-more-menu-button
+        id="tweet-more-button-<%= tweet.id %>"
+        aria-haspopup="menu"
+        aria-expanded="false"
+        aria-controls="tweet-more-menu-<%= tweet.id %>"
+      >More</button>
+      <div
+        id="tweet-more-menu-<%= tweet.id %>"
+        class="tweet-more-popover"
+        data-more-menu
+        role="menu"
+        aria-labelledby="tweet-more-button-<%= tweet.id %>"
+        hidden
+      >
+        <% if (currentUser) { %>
+          <a href="/tweets/<%= tweet.id %>/quote" class="more-menu-item" role="menuitem">Quote</a>
+        <% } %>
+        <% if (currentUser && currentUser.id !== tweet.user_id) { %>
+          <form method="POST" action="/messages/start/<%= tweet.username %>" class="more-menu-form">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="more-menu-item" role="menuitem">Message</button>
+          </form>
+          <% if (!tweet.is_bot) { %>
+            <form method="POST" action="/pokes/<%= tweet.username %>" class="more-menu-form">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="more-menu-item" role="menuitem">Poke</button>
+            </form>
+          <% } %>
+        <% } %>
+        <button type="button" class="more-menu-item" data-copy-url="/tweets/<%= tweet.id %>" role="menuitem">Copy link</button>
+        <% if (currentUser && currentUser.id === tweet.user_id) { %>
+          <form method="POST" action="/tweets/<%= tweet.id %>/delete" class="more-menu-form">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="more-menu-item more-menu-danger" role="menuitem">Delete</button>
+          </form>
+        <% } %>
+      </div>
+    </div>
   </div>
+
+  <% if (showInlineCommentsPanel) { %>
+    <section class="comment-preview-panel" aria-label="Comments">
+      <% if (currentUser) { %>
+        <form method="POST" action="/tweets/<%= tweet.id %>/replies" class="comment-inline-form" data-comment-form>
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <label for="inline-comment-<%= tweet.id %>" class="sr-only">Write a comment</label>
+          <textarea
+            id="inline-comment-<%= tweet.id %>"
+            name="content"
+            rows="2"
+            maxlength="280"
+            class="tweet-textarea comment-inline-input"
+            placeholder="Write a comment"
+            data-comment-input
+          ></textarea>
+          <div class="comment-inline-actions">
+            <p class="comment-inline-hint muted" data-comment-hint>Write at least one character to comment.</p>
+            <button type="submit" class="btn-secondary btn-sm" data-comment-submit disabled>Comment</button>
+          </div>
+        </form>
+      <% } %>
+
+      <% if (commentPreview.length) { %>
+        <div class="comment-preview-list">
+          <% commentPreview.forEach((comment) => { %>
+            <article class="comment-preview-item">
+              <div class="comment-preview-meta">
+                <a href="/users/<%= comment.username %>" class="comment-preview-author">
+                  <strong><%= comment.display_name %></strong>
+                  <span class="tweet-username">@<%= comment.username %></span>
+                </a>
+                <time class="tweet-time"><%= formatTime(comment.created_at) %></time>
+              </div>
+              <p class="comment-preview-content">
+                <% linkifyTextSegments(comment.content).forEach((segment) => { %>
+                  <% if (segment.type === 'link') { %>
+                    <% const safeCommentHref = safeHttpUrl(segment.href); %>
+                    <% const commentLinkLabel = segment.display || segment.value; %>
+                    <% if (safeCommentHref) { %>
+                      <a
+                        href="<%= safeCommentHref %>"
+                        class="tweet-link tweet-link-chip"
+                        target="_blank"
+                        rel="noopener noreferrer nofollow"
+                      ><%= commentLinkLabel %></a>
+                    <% } else { %>
+                      <%= segment.value %>
+                    <% } %>
+                  <% } else { %>
+                    <%= segment.value %>
+                  <% } %>
+                <% }) %>
+              </p>
+              <a href="/tweets/<%= tweet.id %>" class="comment-reply-link">Reply</a>
+            </article>
+          <% }) %>
+        </div>
+      <% } else { %>
+        <p class="comment-preview-empty muted">No comments yet. Start the conversation.</p>
+      <% } %>
+
+      <a href="/tweets/<%= tweet.id %>" class="comment-view-all">
+        View all comments (<%= formatCount(totalCommentCount) %>)
+      </a>
+    </section>
+  <% } %>
 </article>

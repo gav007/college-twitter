@@ -8,48 +8,80 @@
 
   <section>
     <h1>Thread</h1>
-    <%- include('partials/tweet-card', { tweet: tweet }) %>
+    <%- include('partials/tweet-card', { tweet: tweet, showInlineComments: false }) %>
   </section>
 
   <section class="panel">
-    <h2>Replies</h2>
+    <h2>Comments</h2>
     <% if (currentUser) { %>
-      <form method="POST" action="/tweets/<%= tweet.id %>/replies">
+      <form method="POST" action="/tweets/<%= tweet.id %>/replies" data-comment-form>
         <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-        <label for="reply-content" class="sr-only">Write your reply</label>
+        <label for="reply-content" class="sr-only">Write a comment</label>
         <textarea
           id="reply-content"
           name="content"
           class="tweet-textarea"
           maxlength="280"
-          required
-          placeholder="Write your reply"
+          placeholder="Write a comment"
+          data-comment-input
         ></textarea>
-        <div class="compose-footer">
+        <div class="compose-footer comment-inline-actions">
+          <p class="comment-inline-hint muted" data-comment-hint>Write at least one character to comment.</p>
           <span class="char-counter">280</span>
-          <button type="submit" class="btn-primary">Reply</button>
+          <button type="submit" class="btn-primary" data-comment-submit disabled>Comment</button>
         </div>
       </form>
     <% } else { %>
-      <p class="muted"><a href="/login">Log in</a> to reply.</p>
+      <p class="muted"><a href="/login">Log in</a> to comment.</p>
     <% } %>
   </section>
 
   <section class="panel">
     <% if (!replies.length) { %>
-      <p class="muted">No replies yet.</p>
+      <p class="muted">No comments yet.</p>
     <% } %>
 
     <% replies.forEach((reply) => { %>
       <article class="reply-card">
         <div class="tweet-header">
           <a href="/users/<%= reply.username %>" class="tweet-author">
-            <strong><%= reply.display_name %></strong>
-            <span class="tweet-username">@<%= reply.username %></span>
+            <span class="tweet-avatar-small" aria-hidden="true">
+              <% if (reply.avatar_url) { %>
+                <img src="<%= safeImageUrl(reply.avatar_url) %>" alt="" class="tweet-avatar-image-small">
+              <% } else { %>
+                <span><%= (reply.display_name || reply.username).slice(0, 1).toUpperCase() %></span>
+              <% } %>
+            </span>
+            <span class="tweet-author-meta">
+              <strong><%= reply.display_name %></strong>
+              <span class="tweet-username">@<%= reply.username %></span>
+            </span>
           </a>
           <time class="tweet-time"><%= formatTime(reply.created_at) %></time>
         </div>
-        <p class="tweet-content"><%= reply.content %></p>
+        <p class="tweet-content">
+          <% linkifyTextSegments(reply.content).forEach((segment) => { %>
+            <% if (segment.type === 'link') { %>
+              <% const safeReplyHref = safeHttpUrl(segment.href); %>
+              <% const replyLinkLabel = segment.display || segment.value; %>
+              <% if (safeReplyHref) { %>
+                <a
+                  href="<%= safeReplyHref %>"
+                  class="tweet-link tweet-link-chip"
+                  target="_blank"
+                  rel="noopener noreferrer nofollow"
+                ><%= replyLinkLabel %></a>
+              <% } else { %>
+                <%= segment.value %>
+              <% } %>
+            <% } else { %>
+              <%= segment.value %>
+            <% } %>
+          <% }) %>
+        </p>
+        <% if (currentUser) { %>
+          <a href="#reply-content" class="comment-reply-link">Reply</a>
+        <% } %>
       </article>
     <% }) %>
   </section>

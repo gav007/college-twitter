@@ -1,63 +1,228 @@
 <%- include('layout/header', { title: 'Home' }) %>
 <%- include('layout/nav') %>
 
-<main class="container page-container">
+<main class="container page-container home-page">
   <% if (error) { %>
     <p class="form-error"><%= error %></p>
   <% } %>
 
-  <% if (currentUser && engagement) { %>
-    <section class="panel engagement-panel">
-      <div class="engagement-panel-head">
-        <div>
-          <h2>Your Streak</h2>
-          <p class="muted"><strong><%= engagement.streak.current %> day<%= engagement.streak.current === 1 ? '' : 's' %></strong> active streak · best <strong><%= engagement.streak.best %></strong></p>
-        </div>
-        <a href="/users/<%= currentUser.username %>" class="btn-secondary engagement-link">View profile</a>
-      </div>
+  <div class="home-layout">
+    <aside class="panel home-left-sidebar">
+      <h2>Navigation</h2>
+      <nav aria-label="Home sidebar links" class="home-left-nav">
+        <a href="/" class="home-left-nav-link">Home</a>
+        <a href="/?tab=for-you" class="home-left-nav-link">For You</a>
+        <a href="/explore" class="home-left-nav-link">Explore</a>
+        <a href="/topics" class="home-left-nav-link">Topics</a>
+        <a href="/messages" class="home-left-nav-link">Messages</a>
+        <a href="/notifications" class="home-left-nav-link">Notifications</a>
+        <a href="/follow-requests" class="home-left-nav-link">Requests</a>
+        <a href="/pokes" class="home-left-nav-link">Pokes</a>
+        <a href="/users/<%= currentUser.username %>" class="home-left-nav-link">Profile</a>
+      </nav>
+    </aside>
 
-      <% if (engagement.nextAchievement) { %>
-        <p class="engagement-next">
-          Next achievement: <strong><%= engagement.nextAchievement.title %></strong>
-          (<%= engagement.nextAchievement.current %>/<%= engagement.nextAchievement.target %>)
+    <section class="home-center-column">
+      <% if (currentUser && engagement) { %>
+        <section class="panel engagement-panel">
+          <div class="engagement-panel-head">
+            <div>
+              <h2>Your Streak</h2>
+              <p class="muted"><strong><%= engagement.streak.current %> day<%= engagement.streak.current === 1 ? '' : 's' %></strong> active streak · best <strong><%= engagement.streak.best %></strong></p>
+            </div>
+            <a href="/users/<%= currentUser.username %>" class="btn-secondary engagement-link">View profile</a>
+          </div>
+
+          <% if (engagement.nextAchievement) { %>
+            <p class="engagement-next">
+              Next achievement: <strong><%= engagement.nextAchievement.title %></strong>
+              (<%= engagement.nextAchievement.current %>/<%= engagement.nextAchievement.target %>)
+            </p>
+          <% } %>
+        </section>
+      <% } %>
+
+      <% if (currentUser) { %>
+        <section class="compose-box compose-box-compact">
+          <form method="POST" action="/tweets" enctype="multipart/form-data" class="compose-form-compact">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <label for="tweet-content" class="sr-only">What is happening?</label>
+            <textarea
+              id="tweet-content"
+              name="content"
+              class="tweet-textarea tweet-textarea-compact"
+              maxlength="280"
+              required
+              placeholder="What is happening?"
+            ></textarea>
+            <div class="compose-advanced">
+              <label for="tweet-image" class="media-label">Attach image (optional)</label>
+              <div class="media-picker-row">
+                <label for="tweet-image" class="file-upload-label file-upload-label-wide">
+                  <span class="file-upload-icon" aria-hidden="true">🖼</span>
+                  <span>Choose file</span>
+                </label>
+                <span id="home-image-file-name" class="file-name-text">No file selected</span>
+              </div>
+              <input
+                id="tweet-image"
+                name="image"
+                type="file"
+                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                class="file-input-hidden"
+                data-file-name-output="#home-image-file-name"
+              >
+              <p class="upload-help">JPG, PNG, or WebP up to 5 MB.</p>
+              <p class="form-error upload-error" data-upload-error aria-live="polite" hidden></p>
+            </div>
+            <div class="compose-footer">
+              <span class="char-counter">280</span>
+              <button type="submit" class="btn-primary">Post</button>
+            </div>
+          </form>
+        </section>
+      <% } %>
+
+      <div class="feed-tabs" role="tablist" aria-label="Feed tabs">
+        <a
+          href="/?tab=following"
+          class="feed-tab <%= activeTab === 'following' ? 'is-active' : '' %>"
+          role="tab"
+          aria-selected="<%= activeTab === 'following' ? 'true' : 'false' %>"
+        >Following</a>
+        <a
+          href="/?tab=for-you"
+          class="feed-tab <%= activeTab === 'for-you' ? 'is-active' : '' %>"
+          role="tab"
+          aria-selected="<%= activeTab === 'for-you' ? 'true' : 'false' %>"
+        >For You</a>
+        <button
+          type="button"
+          class="new-posts-pill"
+          data-new-posts-pill
+          data-feed-tab="<%= activeTab %>"
+          data-feed-since="<%= firstTweetCreatedAt || '' %>"
+          hidden
+        ></button>
+      </div>
+      <p class="sr-only" aria-live="polite" aria-atomic="true" data-feed-live-region></p>
+
+      <section class="timeline-surface" data-feed-surface aria-label="Main feed timeline">
+        <% if (!tweets.length) { %>
+          <p class="muted timeline-empty">
+            <%= activeTab === 'for-you' ? 'No For You posts yet.' : 'Your following feed is empty right now.' %>
+            <a href="/explore">Explore recent posts</a> or follow people to fill this timeline.
+          </p>
+        <% } else { %>
+          <% tweets.forEach((tweet) => { %>
+            <%- include('partials/tweet-card', { tweet: tweet }) %>
+          <% }) %>
+        <% } %>
+      </section>
+
+      <% if (activeTab === 'following' && nextCursor) { %>
+        <p class="load-more-wrap" data-load-more-wrap>
+          <a
+            class="btn-secondary load-more-link"
+            href="/?tab=following&cursorCreatedAt=<%= encodeURIComponent(nextCursor.createdAt) %>&cursorId=<%= nextCursor.id %>"
+          >Load more posts</a>
         </p>
       <% } %>
+      <button type="button" class="back-to-top-btn" data-back-to-top hidden>Back to top</button>
     </section>
-  <% } %>
 
-  <% if (currentUser) { %>
-    <section class="compose-box">
-      <form method="POST" action="/tweets" enctype="multipart/form-data">
-        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-        <label for="tweet-content" class="sr-only">What is happening?</label>
-        <textarea id="tweet-content" name="content" class="tweet-textarea" maxlength="280" required placeholder="What is happening?"></textarea>
-        <label for="tweet-image" class="media-label">Attach image (optional)</label>
-        <input
-          id="tweet-image"
-          name="image"
-          type="file"
-          accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
-          class="media-input"
-        >
-        <p class="upload-help">JPG, PNG, or WebP up to 5 MB.</p>
-        <p class="form-error upload-error" data-upload-error aria-live="polite" hidden></p>
-        <div class="compose-footer">
-          <span class="char-counter">280</span>
-          <button type="submit" class="btn-primary">Post</button>
+    <aside class="panel home-right-sidebar">
+      <h2>Tonight near campus</h2>
+      <p class="muted">Fresh picks ranked for free/cheap, near, and latest.</p>
+      <% if (!tonightNearCampus || !tonightNearCampus.length) { %>
+        <p class="muted">No fresh event picks yet.</p>
+      <% } else { %>
+        <div class="tonight-list">
+          <% tonightNearCampus.forEach((eventItem) => { %>
+            <article class="tonight-card">
+              <% if (eventItem.imageUrl) { %>
+                <a href="<%= safeHttpUrl(eventItem.linkUrl) %>" class="tonight-card-image-wrap" target="_blank" rel="noopener noreferrer">
+                  <img src="<%= safeImageUrl(eventItem.imageUrl) %>" alt="" class="tonight-card-image">
+                </a>
+              <% } %>
+              <a href="<%= safeHttpUrl(eventItem.linkUrl) %>" class="tonight-card-title" target="_blank" rel="noopener noreferrer"><%= eventItem.headline %></a>
+              <% if (eventItem.detail) { %>
+                <p class="tonight-card-detail"><%= eventItem.detail %></p>
+              <% } %>
+              <div class="tonight-card-meta">
+                <% if (eventItem.badges && eventItem.badges.length) { %>
+                  <span class="tonight-badges">
+                    <% eventItem.badges.forEach((badge) => { %>
+                      <span class="tonight-badge"><%= badge %></span>
+                    <% }) %>
+                  </span>
+                <% } %>
+                <span class="muted"><%= formatTime(eventItem.createdAt) %></span>
+              </div>
+            </article>
+          <% }) %>
         </div>
-      </form>
-    </section>
-  <% } %>
+      <% } %>
 
-  <section>
-    <% if (!tweets.length) { %>
-      <p class="muted">No tweets yet. Follow people or post your first tweet.</p>
-    <% } %>
-
-    <% tweets.forEach((tweet) => { %>
-      <%- include('partials/tweet-card', { tweet: tweet }) %>
-    <% }) %>
-  </section>
+      <hr class="sidebar-divider">
+      <h2>Suggested users</h2>
+      <p class="muted">Recently active people to follow.</p>
+      <% if (!suggestedUsers || !suggestedUsers.length) { %>
+        <p class="muted">No suggestions right now.</p>
+      <% } else { %>
+        <div class="suggested-users-list">
+          <% suggestedUsers.forEach((user) => { %>
+            <article class="suggested-user-card">
+              <a href="/users/<%= user.username %>" class="follow-list-user">
+                <span class="tweet-avatar-small" aria-hidden="true">
+                  <% if (user.avatar_url) { %>
+                    <img src="<%= safeImageUrl(user.avatar_url) %>" alt="" class="tweet-avatar-image-small">
+                  <% } else { %>
+                    <span><%= (user.display_name || user.username).slice(0, 1).toUpperCase() %></span>
+                  <% } %>
+                </span>
+                <span class="follow-list-meta">
+                  <strong><%= user.display_name %></strong>
+                  <span class="tweet-username">@<%= user.username %></span>
+                  <span class="muted"><%= formatCount(user.follower_count || 0) %> followers</span>
+                  <span class="suggested-user-reasons">
+                    <% if (user.mutual_following_count > 0) { %>
+                      <span class="suggested-reason-chip"><%= formatCount(user.mutual_following_count) %> mutual</span>
+                    <% } %>
+                    <% if (user.interaction_count > 0) { %>
+                      <span class="suggested-reason-chip">Recent interaction</span>
+                    <% } %>
+                    <% if (user.has_fresh_post) { %>
+                      <span class="suggested-reason-chip">Active now</span>
+                    <% } %>
+                  </span>
+                </span>
+              </a>
+              <div class="suggested-user-actions">
+                <form method="POST" action="/users/<%= user.username %>/follow" class="topic-toggle-form">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button
+                    type="submit"
+                    class="follow-btn <%= (user.is_private && user.has_pending_follow_request) ? 'requested' : '' %>"
+                  >
+                    <% if (user.is_private) { %>
+                      <%= user.has_pending_follow_request ? 'Requested' : 'Request' %>
+                    <% } else { %>
+                      Follow
+                    <% } %>
+                  </button>
+                </form>
+                <form method="POST" action="/users/<%= user.username %>/dismiss-suggestion" class="topic-toggle-form">
+                  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                  <button type="submit" class="action-btn suggested-dismiss-btn" aria-label="Dismiss suggestion">Dismiss</button>
+                </form>
+              </div>
+            </article>
+          <% }) %>
+        </div>
+      <% } %>
+    </aside>
+  </div>
 </main>
 
 <%- include('layout/footer') %>

@@ -2,21 +2,90 @@
 <%- include('layout/nav') %>
 
 <main class="container page-container">
-  <section class="panel">
-    <p class="muted">Use the header search to find people and jump into profiles.</p>
+  <section class="panel explore-search-help" aria-labelledby="explore-title">
+    <div class="explore-search-watermark" aria-hidden="true">
+      <svg class="explore-watermark-mark" viewBox="0 0 64 64" focusable="false">
+        <circle cx="32" cy="32" r="30"></circle>
+        <path d="M24 18h8v28h16v8H24z"></path>
+      </svg>
+    </div>
+    <div class="explore-search-header">
+      <span class="explore-search-brand" aria-hidden="true">
+        <svg class="explore-search-brand-mark" viewBox="0 0 64 64" focusable="false">
+          <title>Loopfeed</title>
+          <circle cx="32" cy="32" r="30"></circle>
+          <path d="M24 18h8v28h16v8H24z"></path>
+        </svg>
+      </span>
+      <div class="explore-search-copy">
+        <h1 id="explore-title">Explore</h1>
+        <p class="muted">Find users with <code>@username</code> or search post keywords.</p>
+      </div>
+    </div>
+    <form method="GET" action="/search" class="search-form explore-search-form" role="search">
+      <label for="explore-search-q" class="sr-only">Search users and posts</label>
+      <div class="explore-search-row">
+        <input
+          id="explore-search-q"
+          name="q"
+          type="search"
+          value="<%= query %>"
+          placeholder="Try @loopfeed, AI, or Dublin events"
+          autocomplete="off"
+        >
+        <button type="submit" class="btn-secondary">Search</button>
+      </div>
+    </form>
+    <p class="explore-search-hint muted">Use <code>@</code> to search usernames, or plain text for post keywords.</p>
 
     <% if (query) { %>
-      <h2>Search results for "<%= query %>"</h2>
+      <h2 class="search-results-title">Search results for "<%= query %>"</h2>
+      <h3 class="search-results-subtitle">Users</h3>
       <% if (!searchResults.length) { %>
         <p class="muted">No matching users.</p>
+      <% } else { %>
+        <div class="search-user-results">
+          <% searchResults.forEach((user) => { %>
+            <article class="search-user-item">
+              <a href="/users/<%= user.username %>" class="search-user-link">
+                <strong><%= user.display_name %></strong>
+                <span class="tweet-username">@<%= user.username %></span>
+                <% if (user.is_bot) { %><span class="bot-badge">Bot</span><% } %>
+              </a>
+              <span class="muted"><%= formatCount(user.tweet_count || 0) %> posts</span>
+            </article>
+          <% }) %>
+        </div>
       <% } %>
-      <% searchResults.forEach((user) => { %>
-        <p>
-          <a href="/users/<%= user.username %>"><%= user.display_name %> (@<%= user.username %>)</a>
-          <% if (user.is_bot) { %><span class="bot-badge">Bot</span><% } %>
-          · <%= user.tweet_count %> tweets
-        </p>
-      <% }) %>
+
+      <% if (!isUserSearch) { %>
+        <h3 class="search-results-subtitle">Posts</h3>
+        <% if (!postSearchResults.length) { %>
+          <p class="muted">No matching posts.</p>
+        <% } else { %>
+          <div class="search-post-results">
+            <% postSearchResults.forEach((post) => { %>
+              <article class="search-post-item">
+                <div class="search-post-meta">
+                  <a href="/users/<%= post.username %>"><strong><%= post.display_name %></strong></a>
+                  <span class="tweet-username">@<%= post.username %></span>
+                  <span class="tweet-time">· <%= formatTime(post.created_at) %></span>
+                </div>
+                <p class="search-post-text">
+                  <% highlightTextSegments(decodeExternalText(post.content), query).forEach((segment) => { %>
+                    <% if (segment.isMatch) { %>
+                      <mark><%= segment.value %></mark>
+                    <% } else { %>
+                      <%= segment.value %>
+                    <% } %>
+                  <% }) %>
+                </p>
+                <a href="/tweets/<%= post.id %>" class="reply-link">Open comments</a>
+              </article>
+            <% }) %>
+          </div>
+        <% } %>
+      <% } %>
     <% } %>
   </section>
 
@@ -36,10 +105,18 @@
         </div>
         <div class="compose-footer">
           <span class="char-counter">280</span>
-          <label class="file-upload-label" aria-label="Attach image">
-            📎
-            <input type="file" name="image" accept="image/jpeg,image/png,image/webp" class="file-input-hidden">
+          <label class="file-upload-label file-upload-label-wide" aria-label="Attach image">
+            <span class="file-upload-icon" aria-hidden="true">📎</span>
+            <span>Attach image</span>
+            <input
+              type="file"
+              name="image"
+              accept="image/jpeg,image/png,image/webp"
+              class="file-input-hidden"
+              data-file-name-output="#explore-image-file-name"
+            >
           </label>
+          <span id="explore-image-file-name" class="file-name-text">No file selected</span>
           <button type="submit" class="btn-primary btn-sm">Post</button>
         </div>
         <p class="upload-help">JPG, PNG, or WebP up to 5 MB.</p>
@@ -57,6 +134,15 @@
     <% tweets.forEach((tweet) => { %>
       <%- include('partials/tweet-card', { tweet: tweet }) %>
     <% }) %>
+
+    <% if (!query && nextCursor) { %>
+      <p class="load-more-wrap">
+        <a
+          class="btn-secondary load-more-link"
+          href="/explore?cursorCreatedAt=<%= encodeURIComponent(nextCursor.createdAt) %>&cursorId=<%= nextCursor.id %>"
+        >Load more posts</a>
+      </p>
+    <% } %>
   </section>
 </main>
 

@@ -1,0 +1,48 @@
+<%- include('layout/header', { title: `Chat with ${conversation.other_display_name}` }) %>
+<%- include('layout/nav') %>
+
+<main class="container page-container">
+  <section class="panel">
+    <div class="messages-thread-header">
+      <div>
+        <h1><%= conversation.other_display_name %></h1>
+        <p class="tweet-username">@<%= conversation.other_username %></p>
+      </div>
+      <a href="/messages" class="btn-secondary">Back to Inbox</a>
+    </div>
+
+    <div class="messages-thread-list" role="log" aria-live="polite">
+      <% if (!messages.length) { %>
+        <p class="muted">No messages yet. Say hello.</p>
+      <% } %>
+
+      <% messages.forEach((message) => { %>
+        <% const isMine = currentUser && message.sender_id === currentUser.id; %>
+        <article class="message-bubble <%= isMine ? 'mine' : '' %>">
+          <p class="message-bubble-text"><%= message.body %></p>
+          <p class="message-bubble-meta">
+            <span><%= isMine ? 'You' : message.sender_display_name %></span>
+            <span>·</span>
+            <time><%= formatTime(message.created_at) %></time>
+          </p>
+        </article>
+      <% }) %>
+    </div>
+
+    <% if (messageError) { %>
+      <p class="form-error"><%= messageError %></p>
+    <% } %>
+
+    <form method="POST" action="/messages/<%= conversation.id %>" class="message-compose-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label for="message-body" class="sr-only">Write a message</label>
+      <textarea id="message-body" name="body" maxlength="1000" required placeholder="Write a message..."></textarea>
+      <div class="compose-footer">
+        <span class="char-counter">1000</span>
+        <button type="submit" class="btn-primary">Send</button>
+      </div>
+    </form>
+  </section>
+</main>
+
+<%- include('layout/footer') %>

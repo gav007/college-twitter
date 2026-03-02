@@ -1,5 +1,7 @@
 const { test, expect } = require('@playwright/test');
 
+test.describe.configure({ timeout: 120_000 });
+
 function uniqueSuffix() {
   return `${Date.now().toString(36)}${Math.floor(Math.random() * 1296)
     .toString(36)
@@ -46,7 +48,7 @@ async function logout(page) {
 async function createTweet(page, content) {
   await page.goto('/');
   await page.getByLabel('What is happening?').fill(content);
-  await page.getByRole('button', { name: 'Post' }).click();
+  await page.locator('form[action="/tweets"] button[type="submit"]').first().click();
   await expect(page.getByText(content)).toBeVisible();
 }
 
@@ -161,6 +163,21 @@ test('header search finds users globally', async ({ browser }) => {
   await bobContext.close();
 });
 
+test('mobile menu includes explore for logged-in users', async ({ browser }) => {
+  const user = buildUser('mobilenav');
+  const mobileContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const page = await mobileContext.newPage();
+
+  await register(page, user);
+  await page.getByRole('button', { name: /Open menu|Close menu/ }).click();
+  await expect(page.getByRole('link', { name: 'Explore', exact: true })).toBeVisible();
+
+  await page.getByRole('link', { name: 'Explore', exact: true }).click();
+  await expect(page).toHaveURL('/explore');
+
+  await mobileContext.close();
+});
+
 test('thread reply flow increments reply count', async ({ page }) => {
   const user = buildUser('replyuser');
   const parentContent = `thread-parent-${uniqueSuffix()}`;
@@ -197,8 +214,9 @@ test('follow user then verify feed and explore regression', async ({ browser }) 
   await register(alicePage, alice);
 
   await alicePage.goto(`/users/${bob.username}`);
-  await alicePage.getByRole('button', { name: 'Follow' }).click();
-  await expect(alicePage.getByRole('button', { name: 'Unfollow' })).toBeVisible();
+  const profileFollowButton = alicePage.locator('.profile-actions').getByRole('button', { name: 'Follow' });
+  await profileFollowButton.click();
+  await expect(alicePage.locator('.profile-actions').getByRole('button', { name: 'Unfollow' })).toBeVisible();
 
   await alicePage.goto('/');
   await expect(alicePage.getByText(bobTweet)).toBeVisible();
@@ -208,4 +226,72 @@ test('follow user then verify feed and explore regression', async ({ browser }) 
 
   await aliceContext.close();
   await bobContext.close();
+});
+
+test('tweet card follow toggle works from explore', async ({ browser }) => {
+  const bob = buildUser('cardbob');
+  const alice = buildUser('cardalice');
+  const bobTweet = `card-follow-tweet-${uniqueSuffix()}`;
+
+  const bobContext = await browser.newContext();
+  const bobPage = await bobContext.newPage();
+  await register(bobPage, bob);
+  await createTweet(bobPage, bobTweet);
+
+  const aliceContext = await browser.newContext();
+  const alicePage = await aliceContext.newPage();
+  await register(alicePage, alice);
+
+  await alicePage.goto('/explore');
+  const bobTweetCard = alicePage.locator('.tweet-card', { hasText: bobTweet }).first();
+  await bobTweetCard.getByRole('button', { name: 'Follow' }).click();
+  await expect(bobTweetCard.getByRole('button', { name: 'Unfollow' })).toBeVisible();
+
+  await bobTweetCard.getByRole('button', { name: 'Unfollow' }).click();
+  await expect(bobTweetCard.getByRole('button', { name: 'Follow' })).toBeVisible();
+
+  await aliceContext.close();
+  await bobContext.close();
+});
+
+test('tweet URLs render as clickable links', async ({ page }) => {
+  const user = buildUser('urluser');
+  const link = 'https://example.com/news/story';
+  const tweetContent = `link-post-${uniqueSuffix()} ${link}`;
+
+  await register(page, user);
+  await createTweet(page, tweetContent);
+
+  const tweetCard = page.locator('.tweet-card', { hasText: tweetContent }).first();
+  await expect(tweetCard.locator('.tweet-link')).toHaveAttribute('href', link);
+});
+
+test('can start a DM from profile and send a message', async ({ browser }) => {
+  const sender = buildUser('dmsender');
+  const receiver = buildUser('dmrecv');
+  const messageBody = `hello-dm-${uniqueSuffix()}`;
+
+  const receiverContext = await browser.newContext();
+  const receiverPage = await receiverContext.newPage();
+  await register(receiverPage, receiver);
+
+  const senderContext = await browser.newContext();
+  const senderPage = await senderContext.newPage();
+  await register(senderPage, sender);
+
+  await senderPage.goto(`/users/${receiver.username}`);
+  await senderPage.locator('.profile-actions').getByRole('button', { name: 'Message' }).click();
+  await expect(senderPage).toHaveURL(/\/messages\/\d+$/);
+  await senderPage.locator('#message-body').fill(messageBody);
+  await senderPage.getByRole('button', { name: 'Send' }).click();
+  await expect(senderPage.getByText(messageBody)).toBeVisible();
+
+  await receiverPage.goto('/messages');
+  await expect(receiverPage.getByText(messageBody)).toBeVisible();
+  await receiverPage.getByRole('link', { name: new RegExp(`@${sender.username}`) }).click();
+  await expect(receiverPage).toHaveURL(/\/messages\/\d+$/);
+  await expect(receiverPage.locator('.message-bubble-text', { hasText: messageBody })).toBeVisible();
+
+  await senderContext.close();
+  await receiverContext.close();
 });

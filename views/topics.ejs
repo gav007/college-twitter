@@ -1,0 +1,34 @@
+<%- include('layout/header', { title: 'Topics' }) %>
+<%- include('layout/nav') %>
+
+<main class="container page-container">
+  <section class="panel">
+    <h1>Topics</h1>
+    <p class="muted">Follow topics to tune your For You feed.</p>
+
+    <% if (!topics.length) { %>
+      <p class="muted">No topics are available right now.</p>
+    <% } %>
+
+    <div class="topics-grid">
+      <% topics.forEach((topic) => { %>
+        <article class="topic-card">
+          <div>
+            <h2><%= topic.label %></h2>
+            <% if (topic.description) { %>
+              <p class="muted"><%= topic.description %></p>
+            <% } %>
+          </div>
+          <form method="POST" action="/topics/<%= topic.slug %>/toggle" class="topic-toggle-form">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button type="submit" class="follow-btn <%= topic.is_following ? 'following' : '' %>">
+              <%= topic.is_following ? 'Following' : 'Follow' %>
+            </button>
+          </form>
+        </article>
+      <% }) %>
+    </div>
+  </section>
+</main>
+
+<%- include('layout/footer') %>

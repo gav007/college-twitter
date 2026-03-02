@@ -34,6 +34,10 @@ async function getTweetFormCsrf(page) {
   return page.locator('form[action="/tweets"] input[name="_csrf"]').inputValue();
 }
 
+async function getAvatarFormCsrf(page) {
+  return page.locator('form[action="/settings/avatar"] input[name="_csrf"]').inputValue();
+}
+
 test('valid image upload succeeds and renders in tweet card', async ({ page }) => {
   const user = buildUser('mediauser');
   const content = `media-valid-${uniqueSuffix()}`;
@@ -45,7 +49,7 @@ test('valid image upload succeeds and renders in tweet card', async ({ page }) =
     mimeType: 'image/png',
     buffer: TINY_PNG_BUFFER
   });
-  await page.getByRole('button', { name: 'Post' }).click();
+  await page.locator('form[action="/tweets"] button[type="submit"]').first().click();
 
   const tweetCard = page.locator('.tweet-card', { hasText: content }).first();
   await expect(tweetCard).toBeVisible();
@@ -153,4 +157,50 @@ test('upload spam hits rate limit', async ({ page }) => {
   }
 
   expect(first429Attempt).toBeGreaterThan(0);
+});
+
+test('avatar upload succeeds and serves image', async ({ page }) => {
+  const user = buildUser('avatarok');
+  await register(page, user);
+  await page.goto(`/users/${user.username}`);
+
+  await page.locator('#profile-avatar-image').setInputFiles({
+    name: 'avatar.png',
+    mimeType: 'image/png',
+    buffer: TINY_PNG_BUFFER
+  });
+  await page.getByRole('button', { name: 'Upload Avatar' }).click();
+
+  await expect(page).toHaveURL(new RegExp(`/users/${user.username}\\?updated=1$`));
+  const profileImage = page.locator('.profile-avatar-image');
+  await expect(profileImage).toBeVisible();
+  const src = await profileImage.getAttribute('src');
+  expect(src).toMatch(/^\/avatars\/.+\.(jpg|jpeg|png|webp)$/);
+
+  const mediaResponse = await page.request.get(src);
+  expect(mediaResponse.status()).toBe(200);
+  expect(mediaResponse.headers()['content-type']).toContain('image/');
+});
+
+test('oversized avatar upload is rejected', async ({ page }) => {
+  const user = buildUser('avatarbig');
+  await register(page, user);
+  await page.goto(`/users/${user.username}`);
+
+  const csrfToken = await getAvatarFormCsrf(page);
+  const oversizedBuffer = Buffer.alloc(1024 * 1024 + 1, 1);
+  const response = await page.request.post('/settings/avatar', {
+    failOnStatusCode: false,
+    multipart: {
+      _csrf: csrfToken,
+      avatar_image: {
+        name: 'huge-avatar.jpg',
+        mimeType: 'image/jpeg',
+        buffer: oversizedBuffer
+      }
+    }
+  });
+
+  expect(response.status()).toBe(413);
+  expect(await response.text()).toContain('Avatar image must be 1 MB or smaller.');
 });

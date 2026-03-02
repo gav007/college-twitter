@@ -1,0 +1,69 @@
+<%- include('layout/header', { title: title }) %>
+<%- include('layout/nav') %>
+
+<main class="container page-container">
+  <section class="panel">
+    <h1>Pokes</h1>
+    <p class="muted">Quick nudges from people in your network.</p>
+
+    <h2>Incoming</h2>
+    <% if (!incoming.length) { %>
+      <p class="muted">No pokes yet.</p>
+    <% } else { %>
+      <div class="follow-list">
+        <% incoming.forEach((poke) => { %>
+          <article class="follow-list-item">
+            <a href="/users/<%= poke.username %>" class="follow-list-user">
+              <span class="tweet-avatar-small" aria-hidden="true">
+                <% if (poke.avatar_url) { %>
+                  <img src="<%= safeImageUrl(poke.avatar_url) %>" alt="" class="tweet-avatar-image-small">
+                <% } else { %>
+                  <span><%= (poke.display_name || poke.username).slice(0, 1).toUpperCase() %></span>
+                <% } %>
+              </span>
+              <span class="follow-list-meta">
+                <strong><%= poke.display_name %></strong>
+                <% if (poke.is_bot) { %><span class="bot-badge">Bot</span><% } %>
+                <span class="tweet-username">@<%= poke.username %></span>
+                <span class="tweet-time">· <%= formatTime(poke.created_at) %></span>
+              </span>
+            </a>
+            <form method="POST" action="/pokes/<%= poke.username %>">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button type="submit" class="action-btn">Poke back</button>
+            </form>
+          </article>
+        <% }) %>
+      </div>
+    <% } %>
+
+    <h2>Sent</h2>
+    <% if (!sent.length) { %>
+      <p class="muted">You have not poked anyone yet.</p>
+    <% } else { %>
+      <div class="follow-list">
+        <% sent.forEach((poke) => { %>
+          <article class="follow-list-item">
+            <a href="/users/<%= poke.username %>" class="follow-list-user">
+              <span class="tweet-avatar-small" aria-hidden="true">
+                <% if (poke.avatar_url) { %>
+                  <img src="<%= safeImageUrl(poke.avatar_url) %>" alt="" class="tweet-avatar-image-small">
+                <% } else { %>
+                  <span><%= (poke.display_name || poke.username).slice(0, 1).toUpperCase() %></span>
+                <% } %>
+              </span>
+              <span class="follow-list-meta">
+                <strong><%= poke.display_name %></strong>
+                <% if (poke.is_bot) { %><span class="bot-badge">Bot</span><% } %>
+                <span class="tweet-username">@<%= poke.username %></span>
+                <span class="tweet-time">· <%= formatTime(poke.created_at) %></span>
+              </span>
+            </a>
+          </article>
+        <% }) %>
+      </div>
+    <% } %>
+  </section>
+</main>
+
+<%- include('layout/footer') %>

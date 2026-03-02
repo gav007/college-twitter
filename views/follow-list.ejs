@@ -1,0 +1,54 @@
+<%- include('layout/header', { title: title }) %>
+<%- include('layout/nav') %>
+
+<main class="container page-container">
+  <section class="panel">
+    <h1><%= title %></h1>
+    <p class="muted">
+      <a href="/users/<%= profileUser.username %>">Back to @<%= profileUser.username %></a>
+    </p>
+
+    <% if (!users.length) { %>
+      <p class="muted">No users to show yet.</p>
+    <% } else { %>
+      <div class="follow-list">
+        <% users.forEach((user) => { %>
+          <article class="follow-list-item">
+            <a href="/users/<%= user.username %>" class="follow-list-user">
+              <span class="tweet-avatar-small" aria-hidden="true">
+                <% if (user.avatar_url) { %>
+                  <img src="<%= safeImageUrl(user.avatar_url) %>" alt="" class="tweet-avatar-image-small">
+                <% } else { %>
+                  <span><%= (user.display_name || user.username).slice(0, 1).toUpperCase() %></span>
+                <% } %>
+              </span>
+              <span class="follow-list-meta">
+                <strong><%= user.display_name %></strong>
+                <% if (user.is_bot) { %><span class="bot-badge">Bot</span><% } %>
+                <% if (user.is_private) { %><span class="private-badge">Private</span><% } %>
+                <span class="tweet-username">@<%= user.username %></span>
+              </span>
+            </a>
+
+            <% if (currentUser && currentUser.id !== user.id) { %>
+              <form method="POST" action="/users/<%= user.username %>/follow">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="follow-btn <%= user.is_following ? 'following' : '' %>">
+                  <% if (user.is_following) { %>
+                    Unfollow
+                  <% } else if (user.is_private) { %>
+                    <%= user.has_pending_follow_request ? 'Cancel request' : 'Request follow' %>
+                  <% } else { %>
+                    Follow
+                  <% } %>
+                </button>
+              </form>
+            <% } %>
+          </article>
+        <% }) %>
+      </div>
+    <% } %>
+  </section>
+</main>
+
+<%- include('layout/footer') %>

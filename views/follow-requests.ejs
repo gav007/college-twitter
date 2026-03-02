@@ -1,0 +1,46 @@
+<%- include('layout/header', { title: title }) %>
+<%- include('layout/nav') %>
+
+<main class="container page-container">
+  <section class="panel">
+    <h1>Follow requests</h1>
+    <p class="muted">Approve who can follow your private profile.</p>
+
+    <% if (!requests.length) { %>
+      <p class="muted">No pending requests.</p>
+    <% } else { %>
+      <div class="follow-list">
+        <% requests.forEach((requestUser) => { %>
+          <article class="follow-list-item">
+            <a href="/users/<%= requestUser.username %>" class="follow-list-user">
+              <span class="tweet-avatar-small" aria-hidden="true">
+                <% if (requestUser.avatar_url) { %>
+                  <img src="<%= safeImageUrl(requestUser.avatar_url) %>" alt="" class="tweet-avatar-image-small">
+                <% } else { %>
+                  <span><%= (requestUser.display_name || requestUser.username).slice(0, 1).toUpperCase() %></span>
+                <% } %>
+              </span>
+              <span class="follow-list-meta">
+                <strong><%= requestUser.display_name %></strong>
+                <% if (requestUser.is_bot) { %><span class="bot-badge">Bot</span><% } %>
+                <span class="tweet-username">@<%= requestUser.username %></span>
+              </span>
+            </a>
+            <div class="request-actions">
+              <form method="POST" action="/follow-requests/<%= requestUser.username %>/approve">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="follow-btn">Approve</button>
+              </form>
+              <form method="POST" action="/follow-requests/<%= requestUser.username %>/decline">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button type="submit" class="btn-secondary">Decline</button>
+              </form>
+            </div>
+          </article>
+        <% }) %>
+      </div>
+    <% } %>
+  </section>
+</main>
+
+<%- include('layout/footer') %>

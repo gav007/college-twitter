@@ -1,0 +1,34 @@
+<%- include('layout/header', { title: 'Quote Post' }) %>
+<%- include('layout/nav') %>
+
+<main class="container page-container">
+  <% if (error) { %>
+    <p class="form-error"><%= error %></p>
+  <% } %>
+
+  <section class="panel">
+    <h1>Quote Post</h1>
+    <form method="POST" action="/tweets/<%= sourceTweet.id %>/quote">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label for="quote-content" class="sr-only">Add your take</label>
+      <textarea
+        id="quote-content"
+        name="content"
+        class="tweet-textarea"
+        maxlength="280"
+        required
+        placeholder="Add your take..."
+      ></textarea>
+      <div class="compose-footer">
+        <span class="char-counter">280</span>
+        <button type="submit" class="btn-primary">Quote</button>
+      </div>
+    </form>
+  </section>
+
+  <section>
+    <%- include('partials/tweet-card', { tweet: sourceTweet, showInlineComments: false }) %>
+  </section>
+</main>
+
+<%- include('layout/footer') %>

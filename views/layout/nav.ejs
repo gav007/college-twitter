@@ -1,8 +1,17 @@
 <% const unreadCount = notificationUnreadCount || 0; %>
+<% const dmUnread = dmUnreadCount || 0; %>
+<% const followReqCount = followRequestCount || 0; %>
+<% const pokeUnread = pokeUnreadCount || 0; %>
 <% const navSearchValue = typeof query !== 'undefined' ? query : ''; %>
 <nav class="site-nav" role="navigation" aria-label="Main navigation">
   <div class="nav-bar">
-    <a href="/" class="nav-logo">Loopfeed</a>
+    <a href="/" class="nav-logo" aria-label="Loopfeed home">
+      <svg class="nav-logo-mark" width="30" height="30" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+        <circle cx="32" cy="32" r="30" fill="#3b5998" stroke="#fff" stroke-opacity="0.85" stroke-width="2"></circle>
+        <path fill="#fff" d="M24 18h8v28h16v8H24z"></path>
+      </svg>
+      <span class="nav-logo-text">Loopfeed</span>
+    </a>
 
     <div class="nav-actions-right">
       <form method="GET" action="/search" class="nav-search-form nav-priority-link" role="search">
@@ -10,16 +19,22 @@
         <input id="nav-search-q" name="q" type="search" value="<%= navSearchValue %>" placeholder="Search @username" class="nav-search-input">
         <button type="submit" class="nav-search-submit">Search</button>
       </form>
-      <a href="/explore" class="nav-link nav-priority-link">Explore</a>
       <% if (currentUser) { %>
+        <a href="/?tab=for-you" class="nav-link nav-priority-link nav-for-you-pill">For You</a>
         <a href="/users/<%= currentUser.username %>" class="nav-avatar-link nav-priority-link" aria-label="Open profile">
           <% if (currentUser.avatar_url) { %>
-            <img src="<%= currentUser.avatar_url %>" alt="<%= currentUser.display_name %> avatar" class="nav-avatar-image">
+            <img src="<%= safeImageUrl(currentUser.avatar_url) %>" alt="<%= currentUser.display_name %> avatar" class="nav-avatar-image">
           <% } else { %>
             <span class="nav-avatar-fallback"><%= (currentUser.display_name || currentUser.username).slice(0, 1).toUpperCase() %></span>
           <% } %>
         </a>
-        <a href="/notifications" class="nav-link nav-priority-link">Notifications</a>
+        <a href="/notifications" class="nav-link nav-priority-link nav-notifications-link" aria-label="Notifications">
+          <span aria-hidden="true">🔔</span>
+          <span>Notifications</span>
+          <% if (unreadCount > 0) { %>
+            <span class="badge nav-notification-badge"><%= unreadCount > 99 ? '99+' : unreadCount %></span>
+          <% } %>
+        </a>
         <button
           class="btn-post-global"
           data-open-compose
@@ -29,7 +44,7 @@
           <span aria-hidden="true">✦ Post</span>
         </button>
       <% } else { %>
-        <button type="button" id="theme-toggle" class="nav-link nav-toggle-theme nav-priority-link">Theme</button>
+        <a href="/explore" class="nav-link nav-priority-link">Explore</a>
         <a href="/login" class="nav-link nav-priority-link">Login</a>
         <a href="/register" class="nav-link nav-priority-link">Register</a>
       <% } %>
@@ -56,8 +71,47 @@
     </li>
     <% if (currentUser) { %>
       <li><a href="/" class="nav-link">Home</a></li>
+      <li><a href="/explore" class="nav-link">Explore</a></li>
+      <li><a href="/topics" class="nav-link">Topics</a></li>
+      <li>
+        <a href="/notifications" class="nav-link nav-notifications-link">
+          <span aria-hidden="true">🔔</span>
+          <span>Notifications</span>
+          <% if (unreadCount > 0) { %>
+            <span class="badge nav-notification-badge"><%= unreadCount > 99 ? '99+' : unreadCount %></span>
+          <% } %>
+        </a>
+      </li>
+      <li>
+        <a href="/messages" class="nav-link nav-messages-link">
+          <span aria-hidden="true">✉</span>
+          <span>Messages</span>
+          <% if (dmUnread > 0) { %>
+            <span class="badge nav-message-badge"><%= dmUnread > 99 ? '99+' : dmUnread %></span>
+          <% } %>
+        </a>
+      </li>
+      <li>
+        <a href="/follow-requests" class="nav-link nav-requests-link">
+          <span aria-hidden="true">👥</span>
+          <span>Requests</span>
+          <% if (followReqCount > 0) { %>
+            <span class="badge nav-request-badge"><%= followReqCount > 99 ? '99+' : followReqCount %></span>
+          <% } %>
+        </a>
+      </li>
+      <li>
+        <a href="/pokes" class="nav-link nav-pokes-link">
+          <span aria-hidden="true">👉</span>
+          <span>Pokes</span>
+          <% if (pokeUnread > 0) { %>
+            <span class="badge nav-poke-badge"><%= pokeUnread > 99 ? '99+' : pokeUnread %></span>
+          <% } %>
+        </a>
+      </li>
+      <li><button type="button" class="nav-link" data-compact-toggle>Compact</button></li>
       <li><a href="/users/<%= currentUser.username %>" class="nav-link">Profile</a></li>
-      <li><button type="button" id="theme-toggle" class="nav-link nav-toggle-theme">Theme</button></li>
+      <li><button type="button" class="nav-link nav-toggle-theme" data-theme-toggle>Theme</button></li>
       <li>
         <form method="POST" action="/logout">
           <input type="hidden" name="_csrf" value="<%= csrfToken %>">
@@ -68,7 +122,7 @@
       <li><a href="/explore" class="nav-link">Explore</a></li>
       <li><a href="/login" class="nav-link">Login</a></li>
       <li><a href="/register" class="nav-link">Register</a></li>
-      <li><button type="button" id="theme-toggle" class="nav-link nav-toggle-theme">Theme</button></li>
+      <li><button type="button" class="nav-link nav-toggle-theme" data-theme-toggle>Theme</button></li>
     <% } %>
   </ul>
 </nav>

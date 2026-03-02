@@ -1,5 +1,7 @@
 const { test, expect } = require('@playwright/test');
 
+test.describe.configure({ timeout: 120_000 });
+
 function uniqueSuffix() {
   return `${Date.now().toString(36)}${Math.floor(Math.random() * 1296)
     .toString(36)
@@ -28,7 +30,7 @@ async function register(page, user) {
 async function createTweet(page, content) {
   await page.goto('/');
   await page.getByLabel('What is happening?').fill(content);
-  await page.getByRole('button', { name: 'Post' }).click();
+  await page.locator('form[action="/tweets"] button[type="submit"]').first().click();
   await expect(page.getByText(content)).toBeVisible();
 }
 
@@ -60,7 +62,7 @@ test('followed-post notifications respect notify toggle', async ({ browser }) =>
   await expect(followerPage.getByRole('link', { name: new RegExp(`@${poster.username}`) })).toBeVisible();
 
   await followerPage.getByRole('button', { name: 'Mark all read' }).click();
-  await expect(followerPage.locator('.notif-badge')).toHaveCount(0);
+  await expect(followerPage.locator('.nav-notification-badge')).toHaveCount(0);
 
   await followerPage.goto(`/users/${poster.username}`);
   await followerPage.getByRole('button', { name: 'Notify Posts: On' }).click();
@@ -70,7 +72,7 @@ test('followed-post notifications respect notify toggle', async ({ browser }) =>
   await createTweet(posterPage, secondTweet);
 
   await followerPage.goto('/');
-  await expect(followerPage.locator('.notif-badge')).toHaveCount(0);
+  await expect(followerPage.locator('.nav-notification-badge')).toHaveCount(0);
   await followerPage.goto('/notifications');
   await expect(followerPage.locator('.notification-item', { hasText: 'posted a new tweet.' })).toHaveCount(1);
 

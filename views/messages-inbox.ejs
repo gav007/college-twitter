@@ -1,0 +1,44 @@
+<%- include('layout/header', { title: 'Messages' }) %>
+<%- include('layout/nav') %>
+
+<main class="container page-container">
+  <section class="panel">
+    <h1>Messages</h1>
+    <p class="muted">Start a conversation from a profile or post card.</p>
+
+    <% if (!conversations.length) { %>
+      <p class="muted">No conversations yet.</p>
+    <% } else { %>
+      <ul class="messages-list" role="list">
+        <% conversations.forEach((conversation) => { %>
+          <li>
+            <a href="/messages/<%= conversation.id %>" class="message-row">
+              <span class="message-row-avatar" aria-hidden="true">
+                <% if (conversation.other_avatar_url) { %>
+                  <img src="<%= safeImageUrl(conversation.other_avatar_url) %>" alt="" class="message-row-avatar-image">
+                <% } else { %>
+                  <span><%= (conversation.other_display_name || conversation.other_username).slice(0, 1).toUpperCase() %></span>
+                <% } %>
+              </span>
+              <span class="message-row-body">
+                <span class="message-row-head">
+                  <strong><%= conversation.other_display_name %></strong>
+                  <span class="tweet-username">@<%= conversation.other_username %></span>
+                  <span class="tweet-time">· <%= formatTime(conversation.last_message_at || conversation.created_at) %></span>
+                </span>
+                <span class="message-row-preview">
+                  <%= conversation.last_message_body || 'No messages yet' %>
+                </span>
+              </span>
+              <% if (conversation.unread_count > 0) { %>
+                <span class="badge"><%= conversation.unread_count > 99 ? '99+' : conversation.unread_count %></span>
+              <% } %>
+            </a>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </section>
+</main>
+
+<%- include('layout/footer') %>
